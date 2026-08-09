@@ -44,7 +44,7 @@ router.patch(
     try {
       const userId = req.user!.userId;
       const { quantity } = req.body;
-      const data = await CartService.updateItem(req.params.id, userId, Number(quantity));
+      const data = await CartService.updateItem(userId, req.params.id, Number(quantity));
       sendSuccessResponse(res, 200, 'Cart item updated successfully', data);
     } catch (err) {
       next(err);
