@@ -1,0 +1,212 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "ShopNest API Documentation",
+    "version": "1.0.0",
+    "description": "API endpoints and specs for the ShopNest full-stack e-commerce system"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000",
+      "description": "Local Development Server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/api/auth/register": {
+      "post": {
+        "summary": "Register a new user",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "email", "password"],
+                "properties": {
+                  "name": { "type": "string", "example": "John Doe" },
+                  "email": { "type": "string", "example": "john@example.com" },
+                  "password": { "type": "string", "example": "Password123" },
+                  "phone": { "type": "string", "example": "01700000000" },
+                  "address": { "type": "string", "example": "Uttara, Dhaka" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "User registered successfully" },
+          "400": { "description": "Validation failed" },
+          "409": { "description": "Email already exists" }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "summary": "User login",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": { "type": "string", "example": "john@example.com" },
+                  "password": { "type": "string", "example": "Password123" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "User logged in successfully" },
+          "401": { "description": "Invalid credentials" }
+        }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "summary": "Fetch logged-in user profile",
+        "tags": ["Auth"],
+        "responses": {
+          "200": { "description": "User profile retrieved successfully" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/api/products": {
+      "get": {
+        "summary": "Fetch all products (with search, filter, sorting, pagination)",
+        "tags": ["Product"],
+        "parameters": [
+          { "name": "search", "in": "query", "schema": { "type": "string" }, "description": "Search in name and description" },
+          { "name": "category", "in": "query", "schema": { "type": "string" }, "description": "Category slug or ID" },
+          { "name": "minPrice", "in": "query", "schema": { "type": "number" } },
+          { "name": "maxPrice", "in": "query", "schema": { "type": "number" } },
+          { "name": "sortBy", "in": "query", "schema": { "type": "string" }, "description": "price, createdAt, name" },
+          { "name": "sortOrder", "in": "query", "schema": { "type": "string" }, "description": "asc, desc" },
+          { "name": "page", "in": "query", "schema": { "type": "integer" } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Products retrieved successfully" }
+        }
+      },
+      "post": {
+        "summary": "Create a new product (Admin)",
+        "tags": ["Product"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "slug", "price", "stock", "sku", "categoryId"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "slug": { "type": "string" },
+                  "price": { "type": "number" },
+                  "discountPrice": { "type": "number", "nullable": true },
+                  "stock": { "type": "integer" },
+                  "sku": { "type": "string" },
+                  "image": { "type": "string" },
+                  "categoryId": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Product created successfully" }
+        }
+      }
+    },
+    "/api/cart": {
+      "get": {
+        "summary": "Retrieve user cart",
+        "tags": ["Cart"],
+        "responses": {
+          "200": { "description": "Cart retrieved successfully" }
+        }
+      },
+      "delete": {
+        "summary": "Clear entire cart",
+        "tags": ["Cart"],
+        "responses": {
+          "200": { "description": "Cart cleared successfully" }
+        }
+      }
+    },
+    "/api/cart/items": {
+      "post": {
+        "summary": "Add item to cart",
+        "tags": ["Cart"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["productId", "quantity"],
+                "properties": {
+                  "productId": { "type": "string" },
+                  "quantity": { "type": "integer", "minimum": 1 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Added to cart successfully" }
+        }
+      }
+    },
+    "/api/orders": {
+      "post": {
+        "summary": "Place an order (Checkout)",
+        "tags": ["Order"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["shippingAddress", "phone"],
+                "properties": {
+                  "shippingAddress": { "type": "string" },
+                  "phone": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Order placed successfully" }
+        }
+      },
+      "get": {
+        "summary": "Get order history (lists all for Admin, own for Customer)",
+        "tags": ["Order"],
+        "responses": {
+          "200": { "description": "Orders retrieved successfully" }
+        }
+      }
+    }
+  }
+}
