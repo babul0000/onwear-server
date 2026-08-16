@@ -24,8 +24,8 @@ async function main() {
 
   await prisma.user.create({
     data: {
-      name: 'ShopNest Admin',
-      email: 'admin@shopnest.com',
+      name: 'OnWear Admin',
+      email: 'admin@onwear.com',
       password: adminPassword,
       phone: '01711111111',
       address: 'Dhaka, Bangladesh',
@@ -38,7 +38,7 @@ async function main() {
     const cust = await prisma.user.create({
       data: {
         name: `Customer Test ${i}`,
-        email: `customer${i}@shopnest.com`,
+        email: `customer${i}@onwear.com`,
         password: customerPassword,
         phone: `0172222222${i}`,
         address: `Street ${i}, Sector 4, Uttara, Dhaka`,
