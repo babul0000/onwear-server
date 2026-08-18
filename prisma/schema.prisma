@@ -8,8 +8,8 @@ generator client {
 }
 
 enum Role {
-  CUSTOMER
-  ADMIN
+  customer
+  admin
 }
 
 enum CategoryStatus {
@@ -46,7 +46,7 @@ model User {
   password   String
   phone      String?
   address    String?
-  role       Role      @default(CUSTOMER)
+  role       Role      @default(customer)
   isDeleted  Boolean   @default(false)
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt

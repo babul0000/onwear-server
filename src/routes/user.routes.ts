@@ -12,7 +12,7 @@ router.use(authMiddleware as any);
 // Admin: Get all users
 router.get(
   '/',
-  roleMiddleware(Role.ADMIN) as any,
+  roleMiddleware(Role.admin) as any,
   async (_req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const data = await UserService.getAll();
@@ -56,7 +56,7 @@ router.patch(
 // Admin: Delete user (Soft Delete)
 router.delete(
   '/:id',
-  roleMiddleware(Role.ADMIN) as any,
+  roleMiddleware(Role.admin) as any,
   async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       await UserService.softDelete(req.params.id);

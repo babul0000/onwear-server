@@ -84,7 +84,7 @@ export class ReviewService {
       throw new AppError('Review not found', 404, 'NOT_FOUND');
     }
 
-    if (role !== 'ADMIN' && review.userId !== userId) {
+    if (role !== 'admin' && review.userId !== userId) {
       throw new AppError('Forbidden: You can only delete your own reviews', 403, 'FORBIDDEN');
     }
 

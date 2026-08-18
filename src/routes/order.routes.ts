@@ -58,7 +58,7 @@ router.get(
 // Admin: Update order status
 router.patch(
   '/:id/status',
-  roleMiddleware(Role.ADMIN) as any,
+  roleMiddleware(Role.admin) as any,
   async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { status, paymentStatus } = req.body;

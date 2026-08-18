@@ -106,7 +106,7 @@ export class OrderService {
       throw new AppError('Order not found', 404, 'NOT_FOUND');
     }
 
-    if (role !== 'ADMIN' && order.userId !== userId) {
+    if (role !== 'admin' && order.userId !== userId) {
       throw new AppError('Forbidden: Access is denied', 403, 'FORBIDDEN');
     }
 
@@ -114,7 +114,7 @@ export class OrderService {
   }
 
   static async getOrders(userId: string, role: string) {
-    if (role === 'ADMIN') {
+    if (role === 'admin') {
       return prisma.order.findMany({
         where: { isDeleted: false },
         include: {

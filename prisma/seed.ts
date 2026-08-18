@@ -29,7 +29,7 @@ async function main() {
       password: adminPassword,
       phone: '01711111111',
       address: 'Dhaka, Bangladesh',
-      role: Role.ADMIN
+      role: Role.admin
     }
   });
 
@@ -42,7 +42,7 @@ async function main() {
         password: customerPassword,
         phone: `0172222222${i}`,
         address: `Street ${i}, Sector 4, Uttara, Dhaka`,
-        role: Role.CUSTOMER
+        role: Role.customer
       }
     });
     customers.push(cust);

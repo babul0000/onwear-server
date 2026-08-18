@@ -11,7 +11,7 @@ const router = Router();
 router.get(
   '/',
   authMiddleware as any,
-  roleMiddleware(Role.ADMIN) as any,
+  roleMiddleware(Role.admin) as any,
   async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const includeDeleted = req.query.includeDeleted === 'true';

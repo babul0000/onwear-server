@@ -39,7 +39,7 @@ router.get(
 router.post(
   '/',
   authMiddleware as any,
-  roleMiddleware(Role.ADMIN) as any,
+  roleMiddleware(Role.admin) as any,
   async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const data = await CategoryService.create(req.body);
@@ -54,7 +54,7 @@ router.post(
 router.patch(
   '/:id',
   authMiddleware as any,
-  roleMiddleware(Role.ADMIN) as any,
+  roleMiddleware(Role.admin) as any,
   async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const data = await CategoryService.update(req.params.id, req.body);
@@ -69,7 +69,7 @@ router.patch(
 router.delete(
   '/:id',
   authMiddleware as any,
-  roleMiddleware(Role.ADMIN) as any,
+  roleMiddleware(Role.admin) as any,
   async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       await CategoryService.softDelete(req.params.id);

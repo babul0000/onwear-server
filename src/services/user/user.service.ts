@@ -20,7 +20,7 @@ export class UserService {
   }
 
   static async getById(id: string, requesterId: string, requesterRole: string) {
-    if (requesterRole !== 'ADMIN' && requesterId !== id) {
+    if (requesterRole !== 'admin' && requesterId !== id) {
       throw new AppError('Forbidden: Access is denied', 403, 'FORBIDDEN');
     }
 
@@ -46,7 +46,7 @@ export class UserService {
   }
 
   static async update(id: string, requesterId: string, requesterRole: string, data: any) {
-    if (requesterRole !== 'ADMIN' && requesterId !== id) {
+    if (requesterRole !== 'admin' && requesterId !== id) {
       throw new AppError('Forbidden: Access is denied', 403, 'FORBIDDEN');
     }
 
@@ -64,7 +64,7 @@ export class UserService {
       address: data.address
     };
 
-    if (requesterRole === 'ADMIN' && data.role) {
+    if (requesterRole === 'admin' && data.role) {
       updateData.role = data.role;
     }
 
