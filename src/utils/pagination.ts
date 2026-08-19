@@ -1,6 +1,11 @@
+/**
+ * Utility to extract and sanitize pagination parameters from request query.
+ * Limits the page size to a maximum of 100 to prevent server performance issues.
+ */
 export const getPaginationParams = (query: any) => {
   const page = Math.max(1, parseInt(query.page as string, 10) || 1);
-  const limit = Math.max(1, parseInt(query.limit as string, 10) || 12);
+  const limit = Math.min(100, Math.max(1, parseInt(query.limit as string, 10) || 12));
   const skip = (page - 1) * limit;
   return { page, limit, skip };
 };
+
