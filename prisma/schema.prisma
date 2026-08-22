@@ -213,6 +213,9 @@ model Order {
   totalAmount     Float
   shippingAddress String
   phone           String
+  email           String?
+  note            String?
+  shippingCost    Float         @default(0)
   status          OrderStatus   @default(PENDING)
   paymentStatus   PaymentStatus @default(UNPAID)
   isDeleted       Boolean       @default(false)

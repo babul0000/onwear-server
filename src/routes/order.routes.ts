@@ -16,8 +16,17 @@ router.post(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = req.user!.userId;
-      const { shippingAddress, phone } = req.body;
-      const data = await OrderService.checkout(userId, shippingAddress, phone);
+      const { shippingAddress, phone, email, note, couponCode, shippingCost, discountApplied } = req.body;
+      const data = await OrderService.checkout(
+        userId,
+        shippingAddress,
+        phone,
+        email,
+        note,
+        couponCode,
+        shippingCost,
+        discountApplied
+      );
       sendSuccessResponse(res, 201, 'Order placed successfully', data);
     } catch (err) {
       next(err);

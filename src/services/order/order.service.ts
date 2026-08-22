@@ -3,7 +3,16 @@ import { AppError } from '../../middlewares/error.middleware';
 import { OrderStatus, PaymentStatus } from '@prisma/client';
 
 export class OrderService {
-  static async checkout(userId: string, shippingAddress: string, phone: string) {
+  static async checkout(
+    userId: string,
+    shippingAddress: string,
+    phone: string,
+    email?: string,
+    note?: string,
+    couponCode?: string,
+    shippingCost?: number,
+    discountApplied?: number
+  ) {
     if (!shippingAddress || !phone) {
       throw new AppError('Shipping address and phone number are required', 400, 'BAD_REQUEST');
     }
@@ -39,14 +48,14 @@ export class OrderService {
 
     // 3. Run Transaction
     return prisma.$transaction(async (tx) => {
-      let totalAmount = 0;
+      let itemsTotal = 0;
       const orderItemsData: any[] = [];
 
       for (const item of cart.items) {
         const priceSnap =
           item.product.discountPrice !== null ? item.product.discountPrice : item.product.price;
         const subtotal = priceSnap * item.quantity;
-        totalAmount += subtotal;
+        itemsTotal += subtotal;
 
         // Reduce stock
         await tx.product.update({
@@ -66,6 +75,17 @@ export class OrderService {
         });
       }
 
+      // Calculate final total
+      const totalAmount = Math.max(0, itemsTotal - (discountApplied || 0) + (shippingCost || 0));
+
+      // Increment coupon usage if coupon code was used
+      if (couponCode) {
+        await tx.coupon.updateMany({
+          where: { code: { equals: couponCode.trim(), mode: 'insensitive' } },
+          data: { usedCount: { increment: 1 } }
+        });
+      }
+
       // Create Order
       const order = await tx.order.create({
         data: {
@@ -73,6 +93,11 @@ export class OrderService {
           totalAmount,
           shippingAddress,
           phone,
+          email: email || null,
+          note: note || null,
+          shippingCost: shippingCost || 0,
+          couponCode: couponCode || null,
+          discountApplied: discountApplied || 0,
           status: OrderStatus.PENDING,
           paymentStatus: PaymentStatus.UNPAID,
           items: {

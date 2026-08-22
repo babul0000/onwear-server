@@ -18,6 +18,8 @@ import cartRoutes from './routes/cart.routes';
 import wishlistRoutes from './routes/wishlist.routes';
 import orderRoutes from './routes/order.routes';
 import promotionRoutes from './routes/promotion.routes';
+import couponRoutes from './routes/coupon.routes';
+import shippingRoutes from './routes/shipping.routes';
 
 const app = express();
 
@@ -71,6 +73,8 @@ app.use('/api/cart', cartRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/promotions', promotionRoutes);
+app.use('/api/coupons', couponRoutes);
+app.use('/api/shipping', shippingRoutes);
 
 // Fallback Middlewares
 app.use(notFoundMiddleware);
