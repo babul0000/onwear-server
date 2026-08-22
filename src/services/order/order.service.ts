@@ -118,7 +118,8 @@ export class OrderService {
       return prisma.order.findMany({
         where: { isDeleted: false },
         include: {
-          user: { select: { id: true, name: true, email: true } }
+          user: { select: { id: true, name: true, email: true } },
+          items: true
         },
         orderBy: { createdAt: 'desc' }
       });
