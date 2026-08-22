@@ -24,6 +24,14 @@ export class CategoryService {
         isDeleted: false,
         ...(!includeInactive && { status: 'ACTIVE' })
       },
+      include: {
+        subcategories: {
+          where: {
+            isDeleted: false,
+            ...(!includeInactive && { status: 'ACTIVE' })
+          }
+        }
+      },
       orderBy: { name: 'asc' }
     });
   }
