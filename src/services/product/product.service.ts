@@ -119,6 +119,9 @@ export class ProductService {
       include: {
         category: {
           select: { id: true, name: true, slug: true }
+        },
+        reviews: {
+          select: { rating: true }
         }
       }
     });
