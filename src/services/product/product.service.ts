@@ -51,7 +51,9 @@ export class ProductService {
   }
 
   static async getAll(query: any, includeDeleted: boolean = false) {
-    const { page, limit, skip } = getPaginationParams(query);
+    const page = parseInt(query.page as string) || 1;
+    const limit = parseInt(query.limit as string) || 12;
+    const skip = (page - 1) * limit;
 
     const where: any = {
       isDeleted: includeDeleted ? undefined : false
@@ -110,30 +112,96 @@ export class ProductService {
     const orderBy: any = {};
     orderBy[sortBy] = sortOrder;
 
-    const [total, data] = await prisma.$transaction([
-      prisma.product.count({ where }),
-      prisma.product.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy,
-        include: {
-          category: {
-            select: { id: true, name: true, slug: true }
-          }
+    // Fetch all matching products before in-memory filtering for stats mapping
+    const dbProducts = await prisma.product.findMany({
+      where,
+      orderBy,
+      include: {
+        category: {
+          select: { id: true, name: true, slug: true }
         }
-      })
-    ]);
+      }
+    });
 
+    // Helper: Parse description metadata
+    const parseMetadata = (desc: string | null) => {
+      if (!desc) return { sizes: [], colors: [], tags: [] };
+      const lines = desc.split('\n');
+      let sizes: string[] = [];
+      let colors: string[] = [];
+      let tags: string[] = [];
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith('Sizes:')) {
+          sizes = trimmed.replace('Sizes:', '').split(',').map(s => s.trim().toUpperCase());
+        }
+        if (trimmed.startsWith('Colors:')) {
+          colors = trimmed.replace('Colors:', '').split(',').map(c => c.trim().toLowerCase());
+        }
+        if (trimmed.startsWith('Tags:')) {
+          tags = trimmed.replace('Tags:', '').split(',').map(t => t.trim().toLowerCase());
+        }
+      }
+      return { sizes, colors, tags };
+    };
+
+    // 1. Gather distinct sizes, colors, and prices
+    const allSizesSet = new Set<string>();
+    const allColorsSet = new Set<string>();
+    let minCategoryPrice = Infinity;
+    let maxCategoryPrice = -Infinity;
+
+    dbProducts.forEach(p => {
+      const { sizes, colors } = parseMetadata(p.description);
+      sizes.forEach(s => { if (s) allSizesSet.add(s); });
+      colors.forEach(c => { if (c) allColorsSet.add(c); });
+
+      const price = p.discountPrice !== null ? p.discountPrice : p.price;
+      if (price < minCategoryPrice) minCategoryPrice = price;
+      if (price > maxCategoryPrice) maxCategoryPrice = price;
+    });
+
+    const availableSizes = Array.from(allSizesSet).sort();
+    const availableColors = Array.from(allColorsSet).sort();
+
+    // 2. Perform in-memory filter matching
+    let filteredProducts = dbProducts;
+    if (query.sizes) {
+      const selectedSizes = (query.sizes as string).split(',').map(s => s.trim().toUpperCase());
+      filteredProducts = filteredProducts.filter(p => {
+        const { sizes } = parseMetadata(p.description);
+        return selectedSizes.some(s => sizes.includes(s));
+      });
+    }
+
+    if (query.colors) {
+      const selectedColors = (query.colors as string).split(',').map(c => c.trim().toLowerCase());
+      filteredProducts = filteredProducts.filter(p => {
+        const { colors } = parseMetadata(p.description);
+        const nameMatches = selectedColors.some(c => p.name.toLowerCase().includes(c));
+        return nameMatches || selectedColors.some(c => colors.includes(c));
+      });
+    }
+
+    const total = filteredProducts.length;
     const totalPages = Math.ceil(total / limit);
+    const paginatedProducts = filteredProducts.slice(skip, skip + limit);
 
     return {
-      data,
+      data: paginatedProducts,
       meta: {
         page,
         limit,
         total,
-        totalPages
+        totalPages,
+        filters: {
+          sizes: availableSizes,
+          colors: availableColors,
+          priceRange: {
+            min: minCategoryPrice === Infinity ? 0 : minCategoryPrice,
+            max: maxCategoryPrice === -Infinity ? 0 : maxCategoryPrice
+          }
+        }
       }
     };
   }
