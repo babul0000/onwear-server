@@ -21,6 +21,7 @@ export class CategoryService {
   static async getAll(includeInactive: boolean = false) {
     return prisma.category.findMany({
       where: {
+        parentId: null,
         isDeleted: false,
         ...(!includeInactive && { status: 'ACTIVE' })
       },
