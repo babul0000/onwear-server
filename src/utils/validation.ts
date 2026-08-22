@@ -20,7 +20,8 @@ export const createCategorySchema = z.object({
   slug: z.string().min(2, 'Slug must be at least 2 characters'),
   description: z.string().optional(),
   image: z.string().optional(),
-  status: z.nativeEnum(CategoryStatus).optional()
+  status: z.nativeEnum(CategoryStatus).optional(),
+  parentId: z.string().nullable().optional()
 });
 
 export const updateCategorySchema = createCategorySchema.partial();
