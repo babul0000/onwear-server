@@ -66,14 +66,26 @@ export class ProductService {
       ];
     }
 
-    // Category filter: could be category slug or categoryId
+    // Category filter: could be category slug or categoryId.
+    // If it is a parent category, we should include all its subcategories' products.
     if (query.category) {
-      where.category = {
-        OR: [
-          { id: query.category as string },
-          { slug: query.category as string }
-        ]
-      };
+      const categoryRecord = await prisma.category.findFirst({
+        where: {
+          OR: [
+            { id: query.category as string },
+            { slug: query.category as string }
+          ],
+          isDeleted: false
+        },
+        include: { subcategories: { select: { id: true } } }
+      });
+
+      if (categoryRecord) {
+        const categoryIds = [categoryRecord.id, ...categoryRecord.subcategories.map((s) => s.id)];
+        where.categoryId = { in: categoryIds };
+      } else {
+        where.categoryId = 'non-existent-id';
+      }
     }
 
     // Price range filters
