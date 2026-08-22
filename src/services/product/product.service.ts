@@ -1,7 +1,6 @@
 import { prisma } from '../../lib/prisma';
 import { AppError } from '../../middlewares/error.middleware';
 import { createProductSchema, updateProductSchema } from '../../utils/validation';
-import { getPaginationParams } from '../../utils/pagination';
 
 export class ProductService {
   static async create(data: any) {
