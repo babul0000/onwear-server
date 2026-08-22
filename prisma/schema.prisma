@@ -9,7 +9,33 @@ generator client {
 
 enum Role {
   customer
+  reseller
+  staff
+  manager
   admin
+}
+
+enum ResellerStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum PricingTier {
+  TIER1
+  TIER2
+  CUSTOM
+}
+
+enum OrderType {
+  RETAIL
+  WHOLESALE
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FLAT
 }
 
 enum CategoryStatus {
@@ -54,6 +80,7 @@ model User {
   cart       Cart?
   wishlist   Wishlist?
   orders     Order[]
+  resellerProfile ResellerProfile?
 
   @@map("users")
   @@index([email])
@@ -67,12 +94,18 @@ model Category {
   image       String?
   status      CategoryStatus @default(ACTIVE)
   isDeleted   Boolean        @default(false)
+  
+  parentId    String?
+  parent      Category?      @relation("CategoryToSubcategory", fields: [parentId], references: [id], onDelete: Cascade)
+  subcategories Category[]   @relation("CategoryToSubcategory")
+
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
   products    Product[]
 
   @@map("categories")
   @@index([slug])
+  @@index([parentId])
 }
 
 model Product {
@@ -89,6 +122,8 @@ model Product {
   categoryId    String
   category      Category        @relation(fields: [categoryId], references: [id])
   isDeleted     Boolean         @default(false)
+  isResellerOnly Boolean        @default(false)
+  sizeChartUrl   String?
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
   reviews       Review[]
@@ -181,9 +216,15 @@ model Order {
   status          OrderStatus   @default(PENDING)
   paymentStatus   PaymentStatus @default(UNPAID)
   isDeleted       Boolean       @default(false)
+  orderType      OrderType     @default(RETAIL)
+  pricingTier    PricingTier?
+  couponCode     String?
+  discountApplied Float        @default(0)
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   items           OrderItem[]
+  transactions   Transaction[]
+  codReconciliations CodReconciliation[]
 
   @@map("orders")
   @@index([userId])
@@ -203,5 +244,109 @@ model OrderItem {
   createdAt   DateTime @default(now())
 
   @@map("order_items")
+  @@index([orderId])
+}
+
+// Reseller profile model
+model ResellerProfile {
+  id              String         @id @default(uuid())
+  userId          String         @unique
+  user            User           @relation(fields: [userId], references: [id])
+  businessName    String
+  nidOrTradeLicense String?
+  status          ResellerStatus @default(PENDING)
+  tier            PricingTier    @default(TIER1)
+  creditLimit     Float          @default(0)
+  outstandingCredit Float        @default(0)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@map("reseller_profiles")
+}
+
+// Coupons schema
+model Coupon {
+  id              String        @id @default(uuid())
+  code            String        @unique
+  discountType    DiscountType
+  discountValue   Float
+  minPurchase     Float         @default(0)
+  firstOrderOnly  Boolean       @default(false)
+  isActive        Boolean       @default(true)
+  expiryDate      DateTime?
+  
+  totalLimit      Int           @default(100)
+  usedCount       Int           @default(0)
+  userLimit       Int           @default(1)
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@map("coupons")
+  @@index([code])
+}
+
+// Promotions & Slide banners
+model Promotion {
+  id          String    @id @default(uuid())
+  title       String
+  imageUrl    String
+  linkUrl     String?
+  startDate   DateTime?
+  endDate     DateTime?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("promotions")
+}
+
+// Flash Sales / Campaigns
+model Campaign {
+  id          String    @id @default(uuid())
+  name        String
+  slug        String    @unique
+  description String?
+  startDate   DateTime
+  endDate     DateTime
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("campaigns")
+  @@index([slug])
+}
+
+// Payment Gateway Transactions
+model Transaction {
+  id            String        @id @default(uuid())
+  orderId       String
+  order         Order         @relation(fields: [orderId], references: [id])
+  gateway       String        // bKash, Nagad, SSLCommerz
+  amount        Float
+  status        String        // SUCCESS, FAILED, PENDING
+  trxId         String        @unique
+  callbackPayload String?     @db.Text
+  createdAt     DateTime      @default(now())
+
+  @@map("transactions")
+  @@index([orderId])
+  @@index([trxId])
+}
+
+// COD Reconciliation Ledger
+model CodReconciliation {
+  id            String        @id @default(uuid())
+  orderId       String
+  order         Order         @relation(fields: [orderId], references: [id])
+  courierName   String        // Pathao, RedX, Steadfast
+  expectedAmount Float
+  receivedAmount Float        @default(0)
+  isReconciled  Boolean       @default(false)
+  discrepancyFlag Boolean     @default(false)
+  reconciledAt  DateTime?
+  createdAt     DateTime      @default(now())
+
+  @@map("cod_reconciliations")
   @@index([orderId])
 }
