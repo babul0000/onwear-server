@@ -17,6 +17,7 @@ import reviewRoutes from './routes/review.routes';
 import cartRoutes from './routes/cart.routes';
 import wishlistRoutes from './routes/wishlist.routes';
 import orderRoutes from './routes/order.routes';
+import promotionRoutes from './routes/promotion.routes';
 
 const app = express();
 
@@ -69,6 +70,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/promotions', promotionRoutes);
 
 // Fallback Middlewares
 app.use(notFoundMiddleware);
