@@ -118,6 +118,7 @@ model Product {
   stock         Int             @default(0)
   sku           String          @unique
   image         String?
+  image2        String?
   status        ProductStatus   @default(ACTIVE)
   categoryId    String
   category      Category        @relation(fields: [categoryId], references: [id])
