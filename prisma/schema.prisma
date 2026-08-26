@@ -354,3 +354,22 @@ model CodReconciliation {
   @@map("cod_reconciliations")
   @@index([orderId])
 }
+
+// Store settings model
+model StoreSetting {
+  id                  String   @id @default("default")
+  storeName           String   @default("ONWEAR")
+  tagline             String   @default("Unique way of elegance.")
+  logoUrl             String?
+  phone               String   @default("01603-742663")
+  email               String   @default("onwear.25@gmail.com")
+  address             String   @default("Khilkhet, Dhaka, Bangladesh, 1229")
+  facebookUrl         String   @default("https://facebook.com/onwear.bd")
+  instagramUrl        String   @default("https://instagram.com/onwear_bd")
+  shippingInsideDhaka Float    @default(80)
+  shippingOutsideDhaka Float   @default(150)
+  updatedAt           DateTime @updatedAt
+
+  @@map("store_settings")
+}
+

@@ -20,6 +20,7 @@ import orderRoutes from './routes/order.routes';
 import promotionRoutes from './routes/promotion.routes';
 import couponRoutes from './routes/coupon.routes';
 import shippingRoutes from './routes/shipping.routes';
+import settingRoutes from './routes/setting.routes';
 
 const app = express();
 
@@ -75,6 +76,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/promotions', promotionRoutes);
 app.use('/api/coupons', couponRoutes);
 app.use('/api/shipping', shippingRoutes);
+app.use('/api/settings', settingRoutes);
 
 // Fallback Middlewares
 app.use(notFoundMiddleware);

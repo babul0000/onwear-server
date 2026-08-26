@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { sendSuccessResponse } from '../utils/response';
+import { SettingService } from '../services/setting/setting.service';
 
 const router = Router();
 
@@ -7,10 +8,10 @@ router.get(
   '/rates',
   async (_req, res, next) => {
     try {
-      // Predefined rates for Bangladesh: Inside Dhaka = 80 Tk, Outside Dhaka = 150 Tk
+      const settings = await SettingService.getSettings();
       sendSuccessResponse(res, 200, 'Shipping rates retrieved successfully', {
-        insideDhaka: 80,
-        outsideDhaka: 150
+        insideDhaka: settings.shippingInsideDhaka,
+        outsideDhaka: settings.shippingOutsideDhaka
       });
     } catch (err) {
       next(err);
@@ -19,3 +20,4 @@ router.get(
 );
 
 export default router;
+

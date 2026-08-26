@@ -1,0 +1,64 @@
+import { prisma } from '../../lib/prisma';
+
+export class SettingService {
+  static async getSettings() {
+    let settings = await prisma.storeSetting.findUnique({
+      where: { id: 'default' }
+    });
+
+    if (!settings) {
+      // Create default settings if not exists
+      settings = await prisma.storeSetting.create({
+        data: {
+          id: 'default',
+          storeName: 'ONWEAR',
+          tagline: 'Unique way of elegance.',
+          logoUrl: null,
+          phone: '01603-742663',
+          email: 'onwear.25@gmail.com',
+          address: 'Khilkhet, Dhaka, Bangladesh, 1229',
+          facebookUrl: 'https://facebook.com/onwear.bd',
+          instagramUrl: 'https://instagram.com/onwear_bd',
+          shippingInsideDhaka: 80,
+          shippingOutsideDhaka: 150
+        }
+      });
+    }
+
+    return settings;
+  }
+
+  static async updateSettings(data: {
+    storeName?: string;
+    tagline?: string;
+    logoUrl?: string | null;
+    phone?: string;
+    email?: string;
+    address?: string;
+    facebookUrl?: string;
+    instagramUrl?: string;
+    shippingInsideDhaka?: number;
+    shippingOutsideDhaka?: number;
+  }) {
+    // Ensure default settings exist first
+    await this.getSettings();
+
+    // Clean up/format fields if necessary
+    const updateData: any = {};
+    if (data.storeName !== undefined) updateData.storeName = data.storeName;
+    if (data.tagline !== undefined) updateData.tagline = data.tagline;
+    if (data.logoUrl !== undefined) updateData.logoUrl = data.logoUrl;
+    if (data.phone !== undefined) updateData.phone = data.phone;
+    if (data.email !== undefined) updateData.email = data.email;
+    if (data.address !== undefined) updateData.address = data.address;
+    if (data.facebookUrl !== undefined) updateData.facebookUrl = data.facebookUrl;
+    if (data.instagramUrl !== undefined) updateData.instagramUrl = data.instagramUrl;
+    if (data.shippingInsideDhaka !== undefined) updateData.shippingInsideDhaka = Number(data.shippingInsideDhaka);
+    if (data.shippingOutsideDhaka !== undefined) updateData.shippingOutsideDhaka = Number(data.shippingOutsideDhaka);
+
+    return prisma.storeSetting.update({
+      where: { id: 'default' },
+      data: updateData
+    });
+  }
+}

@@ -16,6 +16,24 @@ async function main() {
   await prisma.product.deleteMany();
   await prisma.category.deleteMany();
   await prisma.user.deleteMany();
+  await prisma.storeSetting.deleteMany();
+
+  console.log('Seeding store settings...');
+  await prisma.storeSetting.create({
+    data: {
+      id: 'default',
+      storeName: 'ONWEAR',
+      tagline: 'Unique way of elegance.',
+      logoUrl: null,
+      phone: '01603-742663',
+      email: 'onwear.25@gmail.com',
+      address: 'Khilkhet, Dhaka, Bangladesh, 1229',
+      facebookUrl: 'https://facebook.com/onwear.bd',
+      instagramUrl: 'https://instagram.com/onwear_bd',
+      shippingInsideDhaka: 80,
+      shippingOutsideDhaka: 150
+    }
+  });
 
   console.log('Seeding users...');
   const salt = await bcrypt.genSalt(10);
@@ -103,6 +121,7 @@ async function main() {
   }
 
   console.log('Seeding products...');
+  const productsData = [
     // Shirts
     { name: "Men's Slim Fit Oxford Cotton Shirt", slug: 'mens-slim-fit-oxford-cotton-shirt', price: 49, discountPrice: 39, stock: 15, sku: 'CLOTH-SHIRT-01', image: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?q=80&w=400', image2: 'https://images.unsplash.com/photo-1589310243389-96a5483213a8?q=80&w=400', categorySlug: 'shirt' },
     { name: "Men's Classic Linen Button-Down Shirt", slug: 'mens-classic-linen-button-down-shirt', price: 55, discountPrice: 45, stock: 20, sku: 'CLOTH-SHIRT-02', image: 'https://images.unsplash.com/photo-1598033129183-c4f50c736f10?q=80&w=400', image2: 'https://images.unsplash.com/photo-1621072156002-e2fcc103e86e?q=80&w=400', categorySlug: 'shirt' },
