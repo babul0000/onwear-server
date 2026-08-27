@@ -1,6 +1,7 @@
 import { prisma } from '../../lib/prisma';
 import { AppError } from '../../middlewares/error.middleware';
 import { createProductSchema, updateProductSchema } from '../../utils/validation';
+import { cache } from '../../utils/cache';
 
 export class ProductService {
   static async create(data: any) {
@@ -29,9 +30,11 @@ export class ProductService {
       throw new AppError('Product SKU already exists', 409, 'DUPLICATE_RECORD');
     }
 
-    return prisma.product.create({
+    const product = await prisma.product.create({
       data: parsed
     });
+    await cache.clearPattern('products:*');
+    return product;
   }
 
   static async getById(id: string) {
@@ -50,6 +53,10 @@ export class ProductService {
   }
 
   static async getAll(query: any, includeDeleted: boolean = false) {
+    const cacheKey = `products:list:${JSON.stringify(query)}:${includeDeleted}`;
+    const cached = await cache.get<any>(cacheKey);
+    if (cached) return cached;
+
     const page = parseInt(query.page as string) || 1;
     const limit = parseInt(query.limit as string) || 12;
     const skip = (page - 1) * limit;
@@ -189,7 +196,7 @@ export class ProductService {
     const totalPages = Math.ceil(total / limit);
     const paginatedProducts = filteredProducts.slice(skip, skip + limit);
 
-    return {
+    const result = {
       data: paginatedProducts,
       meta: {
         page,
@@ -206,6 +213,8 @@ export class ProductService {
         }
       }
     };
+    await cache.set(cacheKey, result, 3600);
+    return result;
   }
 
   static async update(id: string, data: any) {
@@ -245,10 +254,12 @@ export class ProductService {
       }
     }
 
-    return prisma.product.update({
+    const updatedProduct = await prisma.product.update({
       where: { id },
       data: parsed
     });
+    await cache.clearPattern('products:*');
+    return updatedProduct;
   }
 
   static async softDelete(id: string) {
@@ -259,9 +270,11 @@ export class ProductService {
       throw new AppError('Product not found', 404, 'NOT_FOUND');
     }
 
-    return prisma.product.update({
+    const deletedProduct = await prisma.product.update({
       where: { id },
       data: { isDeleted: true }
     });
+    await cache.clearPattern('products:*');
+    return deletedProduct;
   }
 }
