@@ -80,7 +80,9 @@ async function main() {
     { name: 'Pant', slug: 'pant', description: 'Tailored trousers, chinos and joggers', image: 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?q=80&w=300' },
     { name: 'T-Shirt', slug: 't-shirt', description: 'Everyday comfortable tee collection', image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=300' },
     { name: 'Cap', slug: 'cap', description: 'Minimalist dad hats and baseball caps', image: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?q=80&w=300' },
-    { name: 'Sandal', slug: 'sandal', description: 'Genuine leather slides and footbed sandals', image: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?q=80&w=300' }
+    { name: 'Sandal', slug: 'sandal', description: 'Genuine leather slides and footbed sandals', image: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?q=80&w=300' },
+    { name: 'Winter Collection', slug: 'winter-collection', description: 'Cozy and warm premium clothing layer choices', image: 'https://images.unsplash.com/photo-1610384072347-4860002763d3?q=80&w=300' },
+    { name: 'Trending', slug: 'trending', description: 'Latest trending street styles and accessories', image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=300' }
   ];
 
   const categoriesMap: Record<string, any> = {};
@@ -102,7 +104,13 @@ async function main() {
   const subcategoriesData = [
     { name: 'Denim', slug: 'denim', description: 'Classic jeans and premium denim jackets', image: 'https://images.unsplash.com/photo-1542272604-787c3835535d?q=80&w=300', parentSlug: 'pant' },
     { name: 'Chino', slug: 'chino', description: 'Chino pants and trousers', image: 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?q=80&w=300', parentSlug: 'pant' },
-    { name: 'Cargo', slug: 'cargo', description: 'Multi-pocket cargo pants', image: 'https://images.unsplash.com/photo-1517423568366-8b83523034fd?q=80&w=300', parentSlug: 'pant' }
+    { name: 'Cargo', slug: 'cargo', description: 'Multi-pocket cargo pants', image: 'https://images.unsplash.com/photo-1517423568366-8b83523034fd?q=80&w=300', parentSlug: 'pant' },
+    { name: 'Full Sleeve Polo', slug: 'full-sleeve-polo', description: 'Premium heavy cotton full sleeve polo shirts', image: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?q=80&w=300', parentSlug: 'winter-collection' },
+    { name: 'Full Sleeve T-Shirts', slug: 'full-sleeve-t-shirts', description: 'Warm and comfortable full sleeve t-shirts', image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=300', parentSlug: 'winter-collection' },
+    { name: 'Winter Essentials', slug: 'winter-essentials', description: 'Hoodies, jackets, and thermal wear', image: 'https://images.unsplash.com/photo-1610384072347-4860002763d3?q=80&w=300', parentSlug: 'winter-collection' },
+    { name: 'Best Sellers', slug: 'best-sellers', description: 'Most ordered styles', image: 'https://images.unsplash.com/photo-1617137968427-85924c800a22?q=80&w=300', parentSlug: 'trending' },
+    { name: 'Customer Favorites', slug: 'customer-favorites', description: 'Top rated by buyers', image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=300', parentSlug: 'trending' },
+    { name: 'Most Popular', slug: 'most-popular', description: 'High in demand', image: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?q=80&w=300', parentSlug: 'trending' }
   ];
 
   for (const sub of subcategoriesData) {
@@ -148,7 +156,18 @@ async function main() {
 
     // Sandals
     { name: "Men's Genuine Leather Slide Sandals", slug: 'mens-genuine-leather-slide-sandals', price: 45, discountPrice: 39, stock: 25, sku: 'CLOTH-SANDAL-01', image: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?q=80&w=400', image2: 'https://images.unsplash.com/photo-1603487742131-4160ec999306?q=80&w=400', categorySlug: 'sandal' },
-    { name: "Men's Everyday Cork Footbed Sandals", slug: 'mens-everyday-cork-footbed-sandals', price: 49, discountPrice: null, stock: 35, sku: 'CLOTH-SANDAL-02', image: 'https://images.unsplash.com/photo-1603487742131-4160ec999306?q=80&w=400', image2: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?q=80&w=400', categorySlug: 'sandal' }
+    { name: "Men's Everyday Cork Footbed Sandals", slug: 'mens-everyday-cork-footbed-sandals', price: 49, discountPrice: null, stock: 35, sku: 'CLOTH-SANDAL-02', image: 'https://images.unsplash.com/photo-1603487742131-4160ec999306?q=80&w=400', image2: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?q=80&w=400', categorySlug: 'sandal' },
+
+    // Winter Collection
+    { name: "Men's Heavyweight Fleece Hoodie", slug: 'mens-heavyweight-fleece-hoodie', price: 65, discountPrice: 55, stock: 20, sku: 'CLOTH-WINTER-01', image: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=400', image2: 'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?q=80&w=400', categorySlug: 'winter-essentials' },
+    { name: "Men's Premium Heavy Knit Cardigan Sweater", slug: 'mens-premium-heavy-knit-cardigan-sweater', price: 89, discountPrice: null, stock: 15, sku: 'CLOTH-WINTER-02', image: 'https://images.unsplash.com/photo-1610384072347-4860002763d3?q=80&w=400', image2: 'https://images.unsplash.com/photo-1614975058789-41316d0e2e9c?q=80&w=400', categorySlug: 'winter-essentials' },
+    { name: "Men's Classic Wool Blend Winter Coat", slug: 'mens-classic-wool-blend-winter-coat', price: 149, discountPrice: 129, stock: 8, sku: 'CLOTH-WINTER-03', image: 'https://images.unsplash.com/photo-1544022613-e87ca75a784a?q=80&w=400', image2: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=400', categorySlug: 'winter-essentials' },
+    { name: "Men's Regular Fit Full Sleeve Polo Shirt", slug: 'mens-regular-fit-full-sleeve-polo-shirt', price: 39, discountPrice: 34, stock: 22, sku: 'CLOTH-WINTER-04', image: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?q=80&w=400', image2: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?q=80&w=400', categorySlug: 'full-sleeve-polo' },
+    { name: "Men's Premium Solid Full Sleeve Tee", slug: 'mens-premium-solid-full-sleeve-tee', price: 29, discountPrice: null, stock: 30, sku: 'CLOTH-WINTER-05', image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=400', image2: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=400', categorySlug: 'full-sleeve-t-shirts' },
+
+    // Trending
+    { name: "Men's Signature Oversized Utility Vest", slug: 'mens-signature-oversized-utility-vest', price: 59, discountPrice: 49, stock: 25, sku: 'CLOTH-TREND-01', image: 'https://images.unsplash.com/photo-1617137968427-85924c800a22?q=80&w=400', image2: 'https://images.unsplash.com/photo-1617137984095-74e4e5e3613f?q=80&w=400', categorySlug: 'best-sellers' },
+    { name: "Men's Streetwear Cargo Pocket Pants", slug: 'mens-streetwear-cargo-pocket-pants', price: 69, discountPrice: null, stock: 18, sku: 'CLOTH-TREND-02', image: 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?q=80&w=400', image2: 'https://images.unsplash.com/photo-1517423568366-8b83523034fd?q=80&w=400', categorySlug: 'best-sellers' }
   ];
 
   const products = [];
