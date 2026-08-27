@@ -1,6 +1,7 @@
 import { prisma } from '../../lib/prisma';
 import { AppError } from '../../middlewares/error.middleware';
 import { createCategorySchema, updateCategorySchema } from '../../utils/validation';
+import { cache } from '../../utils/cache';
 
 export class CategoryService {
   static async create(data: any) {
@@ -13,13 +14,19 @@ export class CategoryService {
       throw new AppError('Category slug already exists', 409, 'DUPLICATE_RECORD');
     }
 
-    return prisma.category.create({
+    const category = await prisma.category.create({
       data: parsed
     });
+    await cache.clearPattern('categories:*');
+    return category;
   }
 
   static async getAll(includeInactive: boolean = false) {
-    return prisma.category.findMany({
+    const cacheKey = `categories:all:${includeInactive}`;
+    const cached = await cache.get<any[]>(cacheKey);
+    if (cached) return cached;
+
+    const categories = await prisma.category.findMany({
       where: {
         parentId: null,
         isDeleted: false,
@@ -35,6 +42,9 @@ export class CategoryService {
       },
       orderBy: { name: 'asc' }
     });
+
+    await cache.set(cacheKey, categories, 3600);
+    return categories;
   }
 
   static async getById(id: string) {
@@ -66,10 +76,12 @@ export class CategoryService {
       }
     }
 
-    return prisma.category.update({
+    const categoryResult = await prisma.category.update({
       where: { id },
       data: parsed
     });
+    await cache.clearPattern('categories:*');
+    return categoryResult;
   }
 
   static async softDelete(id: string) {
@@ -80,7 +92,7 @@ export class CategoryService {
       throw new AppError('Category not found', 404, 'NOT_FOUND');
     }
 
-    return prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
       // Soft delete associated products
       await tx.product.updateMany({
         where: { categoryId: id },
@@ -92,5 +104,9 @@ export class CategoryService {
         data: { isDeleted: true }
       });
     });
+
+    await cache.clearPattern('categories:*');
+    await cache.clearPattern('products:*');
+    return result;
   }
 }
