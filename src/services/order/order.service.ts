@@ -31,40 +31,49 @@ export class OrderService {
       throw new AppError('Cannot place an order with an empty cart', 400, 'BAD_REQUEST');
     }
 
-    // 2. Validate availability and stock
-    for (const item of cart.items) {
-      if (item.product.isDeleted || item.product.status !== 'ACTIVE') {
-        throw new AppError(`Product "${item.product.name}" is no longer available`, 400, 'BAD_REQUEST');
-      }
-
-      if (item.product.stock < item.quantity) {
-        throw new AppError(
-          `Insufficient stock for product "${item.product.name}". Available: ${item.product.stock}`,
-          400,
-          'OUT_OF_STOCK'
-        );
-      }
-    }
-
-    // 3. Run Transaction
+    // 2. Run Transaction
     return prisma.$transaction(async (tx) => {
       let itemsTotal = 0;
       const orderItemsData: any[] = [];
 
       for (const item of cart.items) {
+        // Fetch fresh, locked product row inside the transaction
+        const product = await tx.product.findUnique({
+          where: { id: item.productId }
+        });
+
+        if (!product || product.isDeleted || product.status !== 'ACTIVE') {
+          throw new AppError(`Product "${item.product.name}" is no longer available`, 400, 'BAD_REQUEST');
+        }
+
+        if (product.stock < item.quantity) {
+          throw new AppError(
+            `Insufficient stock for product "${product.name}". Available: ${product.stock}`,
+            400,
+            'OUT_OF_STOCK'
+          );
+        }
+
         const priceSnap =
-          item.product.discountPrice !== null ? item.product.discountPrice : item.product.price;
+          product.discountPrice !== null ? product.discountPrice : product.price;
         const subtotal = priceSnap * item.quantity;
         itemsTotal += subtotal;
 
         // Reduce stock
-        await tx.product.update({
+        const updatedProduct = await tx.product.update({
           where: { id: item.productId },
           data: {
-            stock: { decrement: item.quantity },
-            status: item.product.stock - item.quantity === 0 ? 'OUT_OF_STOCK' : undefined
+            stock: { decrement: item.quantity }
           }
         });
+
+        // Safely update status if stock reaches 0
+        if (updatedProduct.stock === 0) {
+          await tx.product.update({
+            where: { id: item.productId },
+            data: { status: 'OUT_OF_STOCK' }
+          });
+        }
 
         orderItemsData.push({
           productId: item.productId,
