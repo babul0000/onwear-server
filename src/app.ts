@@ -24,6 +24,9 @@ import settingRoutes from './routes/setting.routes';
 
 const app = express();
 
+// Trust proxy headers under reverse proxies (Cloudflare, Nginx, Vercel)
+app.set('trust proxy', 1);
+
 // Middlewares
 app.use(helmet());
 app.use(
