@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import logger from '../utils/logger';
 
 export class AppError extends Error {
   public statusCode: number;
@@ -51,6 +52,14 @@ export const errorMiddleware = (
       errorCode = `PRISMA_ERROR_${err.code}`;
     }
   }
+
+  // Log the error using winston structured logger
+  logger.error(message, {
+    statusCode,
+    errorCode,
+    details,
+    stack: err.stack
+  });
 
   res.status(statusCode).json({
     success: false,
