@@ -2,6 +2,50 @@ import { prisma } from '../../lib/prisma';
 import { AppError } from '../../middlewares/error.middleware';
 
 export class CouponService {
+  static async create(data: {
+    code: string;
+    discountType: any;
+    discountValue: number;
+    minPurchase?: number;
+    firstOrderOnly?: boolean;
+    isActive?: boolean;
+    expiryDate?: string;
+    totalLimit?: number;
+    userLimit?: number;
+  }) {
+    if (!data.code || !data.discountType || data.discountValue === undefined) {
+      throw new AppError('Code, discount type, and discount value are required', 400, 'BAD_REQUEST');
+    }
+
+    const existing = await prisma.coupon.findUnique({
+      where: { code: data.code.trim().toUpperCase() }
+    });
+
+    if (existing) {
+      throw new AppError('Coupon code already exists', 409, 'DUPLICATE_RECORD');
+    }
+
+    return prisma.coupon.create({
+      data: {
+        code: data.code.trim().toUpperCase(),
+        discountType: data.discountType,
+        discountValue: Number(data.discountValue),
+        minPurchase: data.minPurchase !== undefined ? Number(data.minPurchase) : 0,
+        firstOrderOnly: !!data.firstOrderOnly,
+        isActive: data.isActive !== undefined ? !!data.isActive : true,
+        expiryDate: data.expiryDate ? new Date(data.expiryDate) : null,
+        totalLimit: data.totalLimit !== undefined ? Number(data.totalLimit) : 100,
+        userLimit: data.userLimit !== undefined ? Number(data.userLimit) : 1
+      }
+    });
+  }
+
+  static async getAll() {
+    return prisma.coupon.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+  }
+
   static async validateCoupon(code: string, subtotal: number, userId?: string) {
     if (!code) {
       throw new AppError('Coupon code is required', 400, 'BAD_REQUEST');
