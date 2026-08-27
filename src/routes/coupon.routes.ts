@@ -27,7 +27,7 @@ router.get(
   '/',
   authMiddleware as any,
   roleMiddleware(Role.admin) as any,
-  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+  async (_req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const data = await CouponService.getAll();
       sendSuccessResponse(res, 200, 'Coupons retrieved successfully', data);
