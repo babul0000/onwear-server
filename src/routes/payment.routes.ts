@@ -25,7 +25,7 @@ router.post(
 // SSLCommerz Success Redirect Callback (Public browser POST)
 router.post(
   '/sslcommerz/success',
-  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  async (req: Request, res: Response): Promise<void> => {
     try {
       const data = await PaymentService.handleSSLCommerzSuccess(req.body);
       res.redirect(`${env.FRONTEND_URL}/orders?payment=success&orderId=${data.orderId}`);
@@ -41,7 +41,7 @@ router.post(
 // SSLCommerz Fail Redirect Callback (Public browser POST)
 router.post(
   '/sslcommerz/fail',
-  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  async (req: Request, res: Response): Promise<void> => {
     try {
       const data = await PaymentService.handleSSLCommerzFail(req.body);
       res.redirect(`${env.FRONTEND_URL}/orders?payment=failed&orderId=${data.orderId}`);
@@ -56,7 +56,7 @@ router.post(
 // SSLCommerz Cancel Redirect Callback (Public browser POST)
 router.post(
   '/sslcommerz/cancel',
-  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  async (req: Request, res: Response): Promise<void> => {
     try {
       const data = await PaymentService.handleSSLCommerzCancel(req.body);
       res.redirect(`${env.FRONTEND_URL}/orders?payment=cancelled&orderId=${data.orderId}`);
@@ -67,6 +67,7 @@ router.post(
     }
   }
 );
+
 
 // bKash Webhook Callback
 router.post(
