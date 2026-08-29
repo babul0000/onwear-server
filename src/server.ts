@@ -18,3 +18,6 @@ process.on('SIGTERM', () => {
     console.log('Process terminated.');
   });
 });
+
+// Restart trigger: updated SSLCommerz credentials in env
+
