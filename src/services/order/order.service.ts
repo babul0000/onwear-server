@@ -187,4 +187,20 @@ export class OrderService {
       }
     });
   }
+
+  static async getGuestOrders(phone: string, orderId?: string) {
+    const cleanPhone = phone.trim();
+    return prisma.order.findMany({
+      where: {
+        phone: cleanPhone,
+        ...(orderId && { id: orderId.trim() }),
+        isDeleted: false
+      },
+      include: {
+        items: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+  }
 }
+

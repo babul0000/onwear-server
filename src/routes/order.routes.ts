@@ -1,14 +1,33 @@
-import { Router, Response, NextFunction } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { OrderService } from '../services/order/order.service';
 import { sendSuccessResponse } from '../utils/response';
 import { authMiddleware, AuthenticatedRequest } from '../middlewares/auth.middleware';
 import { roleMiddleware } from '../middlewares/role.middleware';
 import { Role } from '@prisma/client';
+import { AppError } from '../middlewares/error.middleware';
 
 const router = Router();
 
+// Guest Order Tracking (Public)
+router.post(
+  '/guest-track',
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { phone, orderId } = req.body;
+      if (!phone) {
+        throw new AppError('Phone number is required for tracking', 400, 'BAD_REQUEST');
+      }
+      const data = await OrderService.getGuestOrders(phone, orderId);
+      sendSuccessResponse(res, 200, 'Guest orders retrieved successfully', data);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 // Apply auth middleware to all order routes
 router.use(authMiddleware as any);
+
 
 // Place an order (Checkout)
 router.post(

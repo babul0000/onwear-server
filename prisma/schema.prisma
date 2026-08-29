@@ -80,6 +80,7 @@ model User {
   cart       Cart?
   wishlist   Wishlist?
   orders     Order[]
+  addresses  Address[]
   resellerProfile ResellerProfile?
 
   @@map("users")
@@ -224,6 +225,7 @@ model Order {
   pricingTier    PricingTier?
   couponCode     String?
   discountApplied Float        @default(0)
+  cancellable    Boolean       @default(true)
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   items           OrderItem[]
@@ -367,9 +369,32 @@ model StoreSetting {
   facebookUrl         String   @default("https://facebook.com/onwear.bd")
   instagramUrl        String   @default("https://instagram.com/onwear_bd")
   shippingInsideDhaka Float    @default(80)
-  shippingOutsideDhaka Float   @default(150)
+  shippingOutsideDhaka Float    @default(150)
   updatedAt           DateTime @updatedAt
 
   @@map("store_settings")
 }
+
+enum ShippingZone {
+  INSIDE_DHAKA
+  OUTSIDE_DHAKA
+}
+
+model Address {
+  id         String       @id @default(uuid())
+  userId     String
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label      String       // "Home", "Office", etc.
+  name       String
+  phone      String
+  line       String
+  zone       ShippingZone @default(INSIDE_DHAKA)
+  isDefault  Boolean      @default(false)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@map("addresses")
+  @@index([userId])
+}
+
 
