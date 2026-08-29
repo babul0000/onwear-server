@@ -36,4 +36,38 @@ router.post(
   }
 );
 
+// Public: Get hero slides
+router.get(
+  '/hero-slides',
+  async (_req: any, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const data = await PromotionService.getHeroSlides();
+      sendSuccessResponse(res, 200, 'Hero slides retrieved successfully', data);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// Admin: Update hero slides
+router.post(
+  '/hero-slides',
+  authMiddleware as any,
+  roleMiddleware(Role.admin) as any,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { slides } = req.body;
+      if (!Array.isArray(slides)) {
+        res.status(400).json({ success: false, message: 'Slides array is required' });
+        return;
+      }
+      const data = await PromotionService.updateHeroSlides(slides);
+      sendSuccessResponse(res, 200, 'Hero slides updated successfully', data);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 export default router;
+
