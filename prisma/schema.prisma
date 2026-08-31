@@ -120,6 +120,7 @@ model Product {
   sku           String          @unique
   image         String?
   image2        String?
+  images        String[]        @default([])
   status        ProductStatus   @default(ACTIVE)
   categoryId    String
   category      Category        @relation(fields: [categoryId], references: [id])

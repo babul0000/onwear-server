@@ -30,6 +30,17 @@ export class ProductService {
       throw new AppError('Product SKU already exists', 409, 'DUPLICATE_RECORD');
     }
 
+    if (parsed.images && parsed.images.length > 0) {
+      if (!parsed.image) {
+        parsed.image = parsed.images[0];
+      }
+      if (!parsed.image2 && parsed.images.length > 1) {
+        parsed.image2 = parsed.images[1];
+      }
+    } else if (parsed.image && (!parsed.images || parsed.images.length === 0)) {
+      parsed.images = [parsed.image, ...(parsed.image2 ? [parsed.image2] : [])];
+    }
+
     const product = await prisma.product.create({
       data: parsed
     });
@@ -252,6 +263,17 @@ export class ProductService {
       if (!category) {
         throw new AppError('Category not found or deleted', 404, 'NOT_FOUND');
       }
+    }
+
+    if (parsed.images && parsed.images.length > 0) {
+      if (!parsed.image) {
+        parsed.image = parsed.images[0];
+      }
+      if (!parsed.image2 && parsed.images.length > 1) {
+        parsed.image2 = parsed.images[1];
+      }
+    } else if (parsed.image && (!parsed.images || parsed.images.length === 0)) {
+      parsed.images = [parsed.image, ...(parsed.image2 ? [parsed.image2] : [])];
     }
 
     const updatedProduct = await prisma.product.update({

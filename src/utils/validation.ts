@@ -36,6 +36,7 @@ export const createProductSchema = z.object({
   sku: z.string().min(2, 'SKU must be at least 2 characters'),
   image: z.string().optional(),
   image2: z.string().optional().nullable(),
+  images: z.array(z.string()).optional(),
   status: z.nativeEnum(ProductStatus).optional(),
   categoryId: z.string().uuid('Category ID must be a valid UUID')
 });
