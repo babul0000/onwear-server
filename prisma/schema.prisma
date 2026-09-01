@@ -177,12 +177,14 @@ model CartItem {
   productId String
   product   Product  @relation(fields: [productId], references: [id])
   quantity  Int      @default(1)
+  size      String?
+  color     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([cartId, productId])
   @@map("cart_items")
   @@index([cartId])
+  @@index([productId])
 }
 
 model Wishlist {
@@ -248,6 +250,8 @@ model OrderItem {
   price       Float
   quantity    Int
   subtotal    Float
+  size        String?
+  color       String?
   createdAt   DateTime @default(now())
 
   @@map("order_items")

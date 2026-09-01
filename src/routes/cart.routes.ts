@@ -28,8 +28,8 @@ router.post(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = req.user!.userId;
-      const { productId, quantity } = req.body;
-      const data = await CartService.addItem(userId, productId, Number(quantity));
+      const { productId, quantity, size, color } = req.body;
+      const data = await CartService.addItem(userId, productId, Number(quantity), size, color);
       sendSuccessResponse(res, 201, 'Product added to cart successfully', data);
     } catch (err) {
       next(err);

@@ -80,7 +80,9 @@ export class OrderService {
           productName: item.product.name,
           price: priceSnap,
           quantity: item.quantity,
-          subtotal
+          subtotal,
+          size: item.size || null,
+          color: item.color || null
         });
       }
 

@@ -54,7 +54,7 @@ export class CartService {
     return cart;
   }
 
-  static async addItem(userId: string, productId: string, quantity: number) {
+  static async addItem(userId: string, productId: string, quantity: number, size?: string, color?: string) {
     if (quantity < 1) {
       throw new AppError('Quantity must be at least 1', 400, 'BAD_REQUEST');
     }
@@ -72,12 +72,15 @@ export class CartService {
 
     const cart = await this.getCart(userId);
 
-    const existingItem = await prisma.cartItem.findUnique({
+    const normSize = size?.trim() || null;
+    const normColor = color?.trim() || null;
+
+    const existingItem = await prisma.cartItem.findFirst({
       where: {
-        cartId_productId: {
-          cartId: cart.id,
-          productId
-        }
+        cartId: cart.id,
+        productId,
+        size: normSize,
+        color: normColor
       }
     });
 
@@ -101,7 +104,24 @@ export class CartService {
       data: {
         cartId: cart.id,
         productId,
-        quantity
+        quantity,
+        size: normSize,
+        color: normColor
+      },
+      include: {
+        product: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            price: true,
+            discountPrice: true,
+            stock: true,
+            image: true,
+            status: true,
+            isDeleted: true
+          }
+        }
       }
     });
   }
