@@ -37,3 +37,25 @@ export const authMiddleware = (
     );
   }
 };
+
+export const optionalAuthMiddleware = (
+  req: AuthenticatedRequest,
+  _res: Response,
+  next: NextFunction
+) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return next();
+  }
+
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = verifyToken(token);
+    req.user = decoded;
+  } catch (err) {
+    // If token is invalid or expired, proceed as unauthenticated guest
+    req.user = undefined;
+  }
+  next();
+};
+

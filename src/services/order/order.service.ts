@@ -1,54 +1,162 @@
+import crypto from 'crypto';
 import { prisma } from '../../lib/prisma';
 import { AppError } from '../../middlewares/error.middleware';
-import { OrderStatus, PaymentStatus } from '@prisma/client';
+import { OrderStatus, PaymentStatus, AccountStatus, CreatedFrom, Role } from '@prisma/client';
+import { EmailService } from '../email/email.service';
+
+export interface CheckoutInput {
+  authUserId?: string;
+  customerName?: string;
+  email: string;
+  phone: string;
+  shippingAddress: string;
+  items?: Array<{
+    productId: string;
+    quantity: number;
+    size?: string | null;
+    color?: string | null;
+  }>;
+  note?: string;
+  couponCode?: string;
+  shippingCost?: number;
+  discountApplied?: number;
+}
 
 export class OrderService {
-  static async checkout(
-    userId: string,
-    shippingAddress: string,
-    phone: string,
-    email?: string,
-    note?: string,
-    couponCode?: string,
-    shippingCost?: number,
-    discountApplied?: number
-  ) {
+  static async checkout(input: CheckoutInput) {
+    const {
+      authUserId,
+      customerName,
+      email,
+      phone,
+      shippingAddress,
+      items: rawItems,
+      note,
+      couponCode,
+      shippingCost,
+      discountApplied
+    } = input;
+
     if (!shippingAddress || !phone) {
       throw new AppError('Shipping address and phone number are required', 400, 'BAD_REQUEST');
     }
 
-    // 1. Get user cart
-    const cart = await prisma.cart.findUnique({
-      where: { userId },
-      include: {
-        items: {
-          include: { product: true }
-        }
-      }
-    });
+    if (!email || !email.includes('@')) {
+      throw new AppError('A valid email address is required for order processing and confirmation', 400, 'BAD_REQUEST');
+    }
 
-    if (!cart || cart.items.length === 0) {
+    const normalizedEmail = email.toLowerCase().trim();
+    const cleanPhone = phone.trim();
+    const cleanName = customerName?.trim() || 'Valued Customer';
+
+    let targetUserId = authUserId;
+    let autoAccountCreated = false;
+    let activationRawToken: string | null = null;
+
+    // 1. Determine checkout user & auto-create account if new guest
+    if (!targetUserId) {
+      const existingUser = await prisma.user.findUnique({
+        where: { email: normalizedEmail }
+      });
+
+      if (existingUser) {
+        targetUserId = existingUser.id;
+        autoAccountCreated = false;
+      }
+    }
+
+    // 2. Prepare items list
+    let checkoutItems: Array<{
+      productId: string;
+      quantity: number;
+      size?: string | null;
+      color?: string | null;
+    }> = [];
+
+    let dbCartIdToClear: string | null = null;
+
+    if (rawItems && rawItems.length > 0) {
+      checkoutItems = rawItems;
+    } else if (targetUserId) {
+      const cart = await prisma.cart.findUnique({
+        where: { userId: targetUserId },
+        include: { items: true }
+      });
+
+      if (cart && cart.items.length > 0) {
+        checkoutItems = cart.items.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          size: item.size,
+          color: item.color
+        }));
+        dbCartIdToClear = cart.id;
+      }
+    }
+
+    if (checkoutItems.length === 0) {
       throw new AppError('Cannot place an order with an empty cart', 400, 'BAD_REQUEST');
     }
 
-    // 2. Run Transaction
-    return prisma.$transaction(async (tx) => {
+    // 3. Execute Transaction
+    const orderResult = await prisma.$transaction(async (tx) => {
+      // If user doesn't exist yet, create them inside transaction
+      if (!targetUserId) {
+        const newUser = await tx.user.create({
+          data: {
+            name: cleanName,
+            email: normalizedEmail,
+            password: null, // Null until customer sets password via activation link
+            phone: cleanPhone,
+            address: shippingAddress,
+            role: Role.customer,
+            accountStatus: AccountStatus.PENDING_ACTIVATION,
+            createdFrom: CreatedFrom.GUEST_CHECKOUT,
+            emailVerified: false
+          }
+        });
+
+        await tx.cart.create({
+          data: { userId: newUser.id }
+        });
+
+        await tx.wishlist.create({
+          data: { userId: newUser.id }
+        });
+
+        // Generate cryptographically secure one-time activation token (24 hour expiry)
+        const rawToken = crypto.randomBytes(32).toString('hex');
+        const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+        await tx.activationToken.create({
+          data: {
+            userId: newUser.id,
+            tokenHash,
+            expiresAt
+          }
+        });
+
+        targetUserId = newUser.id;
+        autoAccountCreated = true;
+        activationRawToken = rawToken;
+      }
+
       let itemsTotal = 0;
       const orderItemsData: any[] = [];
 
-      for (const item of cart.items) {
-        // Fetch fresh, locked product row inside the transaction
+      for (const item of checkoutItems) {
         const product = await tx.product.findUnique({
           where: { id: item.productId }
         });
 
         if (!product || product.isDeleted || product.status !== 'ACTIVE') {
-          throw new AppError(`Product "${item.product.name}" is no longer available`, 400, 'BAD_REQUEST');
+          throw new AppError(`Product is no longer available`, 400, 'BAD_REQUEST');
         }
 
         if (product.stock < item.quantity) {
           throw new AppError(
-            `Insufficient stock for product "${product.name}". Available: ${product.stock}`,
+            `Insufficient stock for "${product.name}". Available: ${product.stock}`,
             400,
             'OUT_OF_STOCK'
           );
@@ -67,7 +175,6 @@ export class OrderService {
           }
         });
 
-        // Safely update status if stock reaches 0
         if (updatedProduct.stock === 0) {
           await tx.product.update({
             where: { id: item.productId },
@@ -77,7 +184,7 @@ export class OrderService {
 
         orderItemsData.push({
           productId: item.productId,
-          productName: item.product.name,
+          productName: product.name,
           price: priceSnap,
           quantity: item.quantity,
           subtotal,
@@ -89,7 +196,6 @@ export class OrderService {
       // Calculate final total
       const totalAmount = Math.max(0, itemsTotal - (discountApplied || 0) + (shippingCost || 0));
 
-      // Increment coupon usage if coupon code was used
       if (couponCode) {
         await tx.coupon.updateMany({
           where: { code: { equals: couponCode.trim(), mode: 'insensitive' } },
@@ -97,14 +203,14 @@ export class OrderService {
         });
       }
 
-      // Create Order
-      const order = await tx.order.create({
+      // Create Order linked to user
+      const createdOrder = await tx.order.create({
         data: {
-          userId,
+          userId: targetUserId!,
           totalAmount,
           shippingAddress,
-          phone,
-          email: email || null,
+          phone: cleanPhone,
+          email: normalizedEmail,
           note: note || null,
           shippingCost: shippingCost || 0,
           couponCode: couponCode || null,
@@ -120,13 +226,32 @@ export class OrderService {
         }
       });
 
-      // Clear Cart Items
-      await tx.cartItem.deleteMany({
-        where: { cartId: cart.id }
-      });
+      // Clear DB Cart Items if user had a registered cart
+      if (dbCartIdToClear) {
+        await tx.cartItem.deleteMany({
+          where: { cartId: dbCartIdToClear }
+        });
+      }
 
-      return order;
+      return createdOrder;
     });
+
+    // 4. Trigger Safe Asynchronous Email Dispatch (non-blocking)
+    if (autoAccountCreated && activationRawToken) {
+      // Fire and forget, catches errors internally
+      EmailService.sendAccountActivationEmail({
+        to: normalizedEmail,
+        name: cleanName,
+        token: activationRawToken,
+        orderId: orderResult.id
+      }).catch((err) => console.error('[OrderService] Async activation email dispatch error:', err));
+    }
+
+    return {
+      ...orderResult,
+      autoAccountCreated,
+      customerEmail: normalizedEmail
+    };
   }
 
   static async getOrderById(orderId: string, userId: string, role: string) {

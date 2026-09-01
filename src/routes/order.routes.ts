@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { OrderService } from '../services/order/order.service';
 import { sendSuccessResponse } from '../utils/response';
-import { authMiddleware, AuthenticatedRequest } from '../middlewares/auth.middleware';
+import { optionalAuthMiddleware, authMiddleware, AuthenticatedRequest } from '../middlewares/auth.middleware';
 import { roleMiddleware } from '../middlewares/role.middleware';
 import { Role } from '@prisma/client';
 import { AppError } from '../middlewares/error.middleware';
@@ -25,33 +25,47 @@ router.post(
   }
 );
 
-// Apply auth middleware to all order routes
-router.use(authMiddleware as any);
-
-
-// Place an order (Checkout)
+// Place an order (Checkout) - Supports both Authenticated and Guest Users
 router.post(
   '/',
+  optionalAuthMiddleware as any,
   async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const userId = req.user!.userId;
-      const { shippingAddress, phone, email, note, couponCode, shippingCost, discountApplied } = req.body;
-      const data = await OrderService.checkout(
-        userId,
-        shippingAddress,
-        phone,
+      const authUserId = req.user?.userId;
+      const {
+        customerName,
         email,
+        phone,
+        shippingAddress,
+        items,
         note,
         couponCode,
         shippingCost,
         discountApplied
-      );
+      } = req.body;
+
+      const data = await OrderService.checkout({
+        authUserId,
+        customerName,
+        email,
+        phone,
+        shippingAddress,
+        items,
+        note,
+        couponCode,
+        shippingCost,
+        discountApplied
+      });
+
       sendSuccessResponse(res, 201, 'Order placed successfully', data);
     } catch (err) {
       next(err);
     }
   }
 );
+
+// Require authentication for all user order management routes below
+router.use(authMiddleware as any);
 
 // Get order history (lists all for Admin, lists own for Customer)
 router.get(

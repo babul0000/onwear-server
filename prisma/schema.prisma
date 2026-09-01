@@ -65,26 +65,56 @@ enum PaymentStatus {
   REFUNDED
 }
 
+enum AccountStatus {
+  ACTIVE
+  PENDING_ACTIVATION
+  SUSPENDED
+}
+
+enum CreatedFrom {
+  DIRECT_REGISTRATION
+  GUEST_CHECKOUT
+  ADMIN_CREATED
+}
+
 model User {
-  id         String    @id @default(uuid())
-  name       String
-  email      String    @unique
-  password   String
-  phone      String?
-  address    String?
-  role       Role      @default(customer)
-  isDeleted  Boolean   @default(false)
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  reviews    Review[]
-  cart       Cart?
-  wishlist   Wishlist?
-  orders     Order[]
-  addresses  Address[]
+  id              String           @id @default(uuid())
+  name            String
+  email           String           @unique
+  password        String?
+  phone           String?
+  address         String?
+  role            Role             @default(customer)
+  accountStatus   AccountStatus    @default(ACTIVE)
+  createdFrom     CreatedFrom      @default(DIRECT_REGISTRATION)
+  emailVerified   Boolean          @default(false)
+  isDeleted       Boolean          @default(false)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  reviews         Review[]
+  cart            Cart?
+  wishlist        Wishlist?
+  orders          Order[]
+  addresses       Address[]
   resellerProfile ResellerProfile?
+  activationTokens ActivationToken[]
 
   @@map("users")
   @@index([email])
+}
+
+model ActivationToken {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@map("activation_tokens")
+  @@index([userId])
+  @@index([tokenHash])
 }
 
 model Category {
