@@ -1,7 +1,13 @@
 import { prisma } from '../../lib/prisma';
+import { cache } from '../../utils/cache';
+
+const CACHE_KEY = 'settings:store:default';
 
 export class SettingService {
   static async getSettings() {
+    const cached = await cache.get<any>(CACHE_KEY);
+    if (cached) return cached;
+
     let settings = await prisma.storeSetting.findUnique({
       where: { id: 'default' }
     });
@@ -25,6 +31,7 @@ export class SettingService {
       });
     }
 
+    await cache.set(CACHE_KEY, settings, 7200); // 2 hours TTL
     return settings;
   }
 
@@ -56,9 +63,12 @@ export class SettingService {
     if (data.shippingInsideDhaka !== undefined) updateData.shippingInsideDhaka = Number(data.shippingInsideDhaka);
     if (data.shippingOutsideDhaka !== undefined) updateData.shippingOutsideDhaka = Number(data.shippingOutsideDhaka);
 
-    return prisma.storeSetting.update({
+    const updated = await prisma.storeSetting.update({
       where: { id: 'default' },
       data: updateData
     });
+
+    await cache.del(CACHE_KEY);
+    return updated;
   }
 }

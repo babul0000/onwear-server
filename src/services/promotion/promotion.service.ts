@@ -1,7 +1,14 @@
 import { prisma } from '../../lib/prisma';
+import { cache } from '../../utils/cache';
+
+const BANNER_CACHE_KEY = 'promotions:hero:banner';
+const SLIDES_CACHE_KEY = 'promotions:hero:slides';
 
 export class PromotionService {
   static async getHeroBanner() {
+    const cached = await cache.get<any>(BANNER_CACHE_KEY);
+    if (cached) return cached;
+
     let banner = await prisma.promotion.findFirst({
       where: { title: 'Hero Cover Photo' }
     });
@@ -17,6 +24,7 @@ export class PromotionService {
       });
     }
 
+    await cache.set(BANNER_CACHE_KEY, banner, 3600);
     return banner;
   }
 
@@ -29,23 +37,30 @@ export class PromotionService {
       where: { title: 'Hero Cover Photo' }
     });
 
+    let result;
     if (!banner) {
-      return prisma.promotion.create({
+      result = await prisma.promotion.create({
         data: {
           title: 'Hero Cover Photo',
           imageUrl,
           isActive: true
         }
       });
+    } else {
+      result = await prisma.promotion.update({
+        where: { id: banner.id },
+        data: { imageUrl }
+      });
     }
 
-    return prisma.promotion.update({
-      where: { id: banner.id },
-      data: { imageUrl }
-    });
+    await cache.del(BANNER_CACHE_KEY);
+    return result;
   }
 
   static async getHeroSlides() {
+    const cached = await cache.get<any[]>(SLIDES_CACHE_KEY);
+    if (cached) return cached;
+
     const titles = ['Hero Slide 1', 'Hero Slide 2', 'Hero Slide 3'];
     let slides = await prisma.promotion.findMany({
       where: { title: { in: titles } },
@@ -88,6 +103,7 @@ export class PromotionService {
       });
     }
 
+    await cache.set(SLIDES_CACHE_KEY, slides, 3600);
     return slides;
   }
 
@@ -102,7 +118,9 @@ export class PromotionService {
         }
       });
     });
-    return prisma.$transaction(updates);
+    const result = await prisma.$transaction(updates);
+    await cache.del(SLIDES_CACHE_KEY);
+    return result;
   }
 }
 

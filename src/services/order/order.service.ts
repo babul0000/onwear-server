@@ -3,6 +3,7 @@ import { prisma } from '../../lib/prisma';
 import { AppError } from '../../middlewares/error.middleware';
 import { OrderStatus, PaymentStatus, AccountStatus, CreatedFrom, Role } from '@prisma/client';
 import { EmailService } from '../email/email.service';
+import { SmsService } from '../sms/sms.service';
 
 export interface CheckoutInput {
   authUserId?: string;
@@ -236,16 +237,38 @@ export class OrderService {
       return createdOrder;
     });
 
-    // 4. Trigger Safe Asynchronous Email Dispatch (non-blocking)
+    // 4. Trigger Safe Asynchronous Email & SMS Dispatch (non-blocking)
     if (autoAccountCreated && activationRawToken) {
-      // Fire and forget, catches errors internally
+      // Fire and forget activation email
       EmailService.sendAccountActivationEmail({
         to: normalizedEmail,
         name: cleanName,
         token: activationRawToken,
         orderId: orderResult.id
       }).catch((err) => console.error('[OrderService] Async activation email dispatch error:', err));
+
+      // Fire and forget activation SMS
+      SmsService.sendActivationSms({
+        phone: cleanPhone,
+        name: cleanName,
+        activationToken: activationRawToken
+      }).catch((err) => console.error('[OrderService] Async activation SMS dispatch error:', err));
     }
+
+    // Send Order Confirmation Email
+    EmailService.sendOrderConfirmationEmail({
+      to: normalizedEmail,
+      name: cleanName,
+      order: orderResult
+    }).catch((err) => console.error('[OrderService] Async order confirmation email error:', err));
+
+    // Send Order Confirmation SMS
+    SmsService.sendOrderConfirmationSms({
+      phone: cleanPhone,
+      orderId: orderResult.id,
+      totalAmount: orderResult.totalAmount,
+      customerName: cleanName
+    }).catch((err) => console.error('[OrderService] Async order confirmation SMS error:', err));
 
     return {
       ...orderResult,
