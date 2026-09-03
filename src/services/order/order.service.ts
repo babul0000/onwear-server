@@ -21,6 +21,9 @@ export interface CheckoutInput {
   couponCode?: string;
   shippingCost?: number;
   discountApplied?: number;
+  paymentMethod?: string;
+  paymentPhone?: string;
+  trxId?: string;
 }
 
 export class OrderService {
@@ -35,7 +38,10 @@ export class OrderService {
       note,
       couponCode,
       shippingCost,
-      discountApplied
+      discountApplied,
+      paymentMethod = 'COD',
+      paymentPhone,
+      trxId
     } = input;
 
     if (!shippingAddress || !phone) {
@@ -216,8 +222,11 @@ export class OrderService {
           shippingCost: shippingCost || 0,
           couponCode: couponCode || null,
           discountApplied: discountApplied || 0,
+          paymentMethod: paymentMethod || 'COD',
+          paymentPhone: paymentPhone || null,
+          trxId: trxId || null,
           status: OrderStatus.PENDING,
-          paymentStatus: PaymentStatus.UNPAID,
+          paymentStatus: paymentMethod === 'COD' ? PaymentStatus.UNPAID : PaymentStatus.UNPAID,
           items: {
             create: orderItemsData
           }
@@ -275,6 +284,52 @@ export class OrderService {
       autoAccountCreated,
       customerEmail: normalizedEmail
     };
+  }
+
+  static async cancelOrder(orderId: string, userId: string, role: string, reason?: string) {
+    const order = await prisma.order.findFirst({
+      where: { id: orderId, isDeleted: false },
+      include: { items: true }
+    });
+
+    if (!order) {
+      throw new AppError('Order not found', 404, 'NOT_FOUND');
+    }
+
+    if (role !== 'admin' && order.userId !== userId) {
+      throw new AppError('Forbidden: You can only cancel your own orders', 403, 'FORBIDDEN');
+    }
+
+    if (order.status !== OrderStatus.PENDING) {
+      throw new AppError(
+        `Order cannot be cancelled because it is already ${order.status.toLowerCase()}. Please contact customer support.`,
+        400,
+        'CANNOT_CANCEL'
+      );
+    }
+
+    return prisma.$transaction(async (tx) => {
+      // 1. Restock items
+      for (const item of order.items) {
+        await tx.product.update({
+          where: { id: item.productId },
+          data: {
+            stock: { increment: item.quantity },
+            status: 'ACTIVE'
+          }
+        });
+      }
+
+      // 2. Update order status to CANCELLED
+      return tx.order.update({
+        where: { id: orderId },
+        data: {
+          status: OrderStatus.CANCELLED,
+          cancelReason: reason || 'Cancelled by customer'
+        },
+        include: { items: true }
+      });
+    });
   }
 
   static async getOrderById(orderId: string, userId: string, role: string) {

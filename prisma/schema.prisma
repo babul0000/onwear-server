@@ -251,6 +251,10 @@ model Order {
   email           String?
   note            String?
   shippingCost    Float         @default(0)
+  paymentMethod   String        @default("COD") // COD, BKASH, NAGAD, ONLINE
+  paymentPhone    String?
+  trxId           String?
+  cancelReason    String?
   status          OrderStatus   @default(PENDING)
   paymentStatus   PaymentStatus @default(UNPAID)
   isDeleted       Boolean       @default(false)
@@ -403,6 +407,9 @@ model StoreSetting {
   address             String   @default("Khilkhet, Dhaka, Bangladesh, 1229")
   facebookUrl         String   @default("https://facebook.com/onwear.bd")
   instagramUrl        String   @default("https://instagram.com/onwear_bd")
+  bkashNumber         String   @default("01603742663")
+  nagadNumber         String   @default("01603742663")
+  whatsappNumber      String   @default("8801603742663")
   shippingInsideDhaka Float    @default(80)
   shippingOutsideDhaka Float    @default(150)
   updatedAt           DateTime @updatedAt

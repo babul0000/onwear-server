@@ -25,6 +25,9 @@ export class SettingService {
           address: 'Khilkhet, Dhaka, Bangladesh, 1229',
           facebookUrl: 'https://facebook.com/onwear.bd',
           instagramUrl: 'https://instagram.com/onwear_bd',
+          bkashNumber: '01603742663',
+          nagadNumber: '01603742663',
+          whatsappNumber: '8801603742663',
           shippingInsideDhaka: 80,
           shippingOutsideDhaka: 150
         }
@@ -44,6 +47,9 @@ export class SettingService {
     address?: string;
     facebookUrl?: string;
     instagramUrl?: string;
+    bkashNumber?: string;
+    nagadNumber?: string;
+    whatsappNumber?: string;
     shippingInsideDhaka?: number;
     shippingOutsideDhaka?: number;
   }) {
@@ -60,6 +66,9 @@ export class SettingService {
     if (data.address !== undefined) updateData.address = data.address;
     if (data.facebookUrl !== undefined) updateData.facebookUrl = data.facebookUrl;
     if (data.instagramUrl !== undefined) updateData.instagramUrl = data.instagramUrl;
+    if (data.bkashNumber !== undefined) updateData.bkashNumber = data.bkashNumber;
+    if (data.nagadNumber !== undefined) updateData.nagadNumber = data.nagadNumber;
+    if (data.whatsappNumber !== undefined) updateData.whatsappNumber = data.whatsappNumber;
     if (data.shippingInsideDhaka !== undefined) updateData.shippingInsideDhaka = Number(data.shippingInsideDhaka);
     if (data.shippingOutsideDhaka !== undefined) updateData.shippingOutsideDhaka = Number(data.shippingOutsideDhaka);
 

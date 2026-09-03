@@ -41,7 +41,10 @@ router.post(
         note,
         couponCode,
         shippingCost,
-        discountApplied
+        discountApplied,
+        paymentMethod,
+        paymentPhone,
+        trxId
       } = req.body;
 
       const data = await OrderService.checkout({
@@ -54,7 +57,10 @@ router.post(
         note,
         couponCode,
         shippingCost,
-        discountApplied
+        discountApplied,
+        paymentMethod,
+        paymentPhone,
+        trxId
       });
 
       sendSuccessResponse(res, 201, 'Order placed successfully', data);
@@ -91,6 +97,22 @@ router.get(
       const role = req.user!.role;
       const data = await OrderService.getOrderById(req.params.id, userId, role);
       sendSuccessResponse(res, 200, 'Order retrieved successfully', data);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// Customer / Admin: Cancel an order (if PENDING)
+router.post(
+  '/:id/cancel',
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userId = req.user!.userId;
+      const role = req.user!.role;
+      const { reason } = req.body;
+      const data = await OrderService.cancelOrder(req.params.id, userId, role, reason);
+      sendSuccessResponse(res, 200, 'Order cancelled successfully', data);
     } catch (err) {
       next(err);
     }

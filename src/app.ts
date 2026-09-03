@@ -26,13 +26,20 @@ import campaignRoutes from './routes/campaign.routes';
 import addressRoutes from './routes/address.routes';
 
 
+import path from 'path';
+import uploadRoutes from './routes/upload.routes';
+
 const app = express();
 
 // Trust proxy headers under reverse proxies (Cloudflare, Nginx, Vercel)
 app.set('trust proxy', 1);
 
 // Middlewares
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' }
+  })
+);
 app.use(
   cors({
     origin: env.FRONTEND_URL,
@@ -56,6 +63,9 @@ app.use('/api', limiter);
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve static uploaded media files
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Health Check
 app.get('/api/health', (_req, res) => {
@@ -87,6 +97,7 @@ app.use('/api/settings', settingRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/campaigns', campaignRoutes);
 app.use('/api/addresses', addressRoutes);
+app.use('/api/upload', uploadRoutes);
 
 
 // Fallback Middlewares
