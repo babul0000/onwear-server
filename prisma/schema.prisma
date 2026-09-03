@@ -409,7 +409,7 @@ model StoreSetting {
   instagramUrl        String   @default("https://instagram.com/onwear_bd")
   bkashNumber         String   @default("01603742663")
   nagadNumber         String   @default("01603742663")
-  whatsappNumber      String   @default("8801603742663")
+  whatsappNumber      String   @default("8801883012641")
   shippingInsideDhaka Float    @default(80)
   shippingOutsideDhaka Float    @default(150)
   updatedAt           DateTime @updatedAt

@@ -27,7 +27,7 @@ export class SettingService {
           instagramUrl: 'https://instagram.com/onwear_bd',
           bkashNumber: '01603742663',
           nagadNumber: '01603742663',
-          whatsappNumber: '8801603742663',
+          whatsappNumber: '8801883012641',
           shippingInsideDhaka: 80,
           shippingOutsideDhaka: 150
         }
