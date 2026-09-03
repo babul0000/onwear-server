@@ -402,14 +402,14 @@ model StoreSetting {
   storeName           String   @default("ONWEAR")
   tagline             String   @default("Unique way of elegance.")
   logoUrl             String?
-  phone               String   @default("01603-742663")
+  phone               String   @default("01603-742963")
   email               String   @default("onwear.25@gmail.com")
   address             String   @default("Khilkhet, Dhaka, Bangladesh, 1229")
   facebookUrl         String   @default("https://facebook.com/onwear.bd")
   instagramUrl        String   @default("https://instagram.com/onwear_bd")
-  bkashNumber         String   @default("01603742663")
-  nagadNumber         String   @default("01603742663")
-  whatsappNumber      String   @default("8801883012641")
+  bkashNumber         String   @default("01603742963")
+  nagadNumber         String   @default("01603742963")
+  whatsappNumber      String   @default("8801603742963")
   shippingInsideDhaka Float    @default(80)
   shippingOutsideDhaka Float    @default(150)
   updatedAt           DateTime @updatedAt

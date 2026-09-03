@@ -20,14 +20,14 @@ export class SettingService {
           storeName: 'ONWEAR',
           tagline: 'Unique way of elegance.',
           logoUrl: null,
-          phone: '01603-742663',
+          phone: '01603-742963',
           email: 'onwear.25@gmail.com',
           address: 'Khilkhet, Dhaka, Bangladesh, 1229',
           facebookUrl: 'https://facebook.com/onwear.bd',
           instagramUrl: 'https://instagram.com/onwear_bd',
-          bkashNumber: '01603742663',
-          nagadNumber: '01603742663',
-          whatsappNumber: '8801883012641',
+          bkashNumber: '01603742963',
+          nagadNumber: '01603742963',
+          whatsappNumber: '8801603742963',
           shippingInsideDhaka: 80,
           shippingOutsideDhaka: 150
         }
