@@ -4,21 +4,18 @@ import { sendSuccessResponse } from '../utils/response';
 import { optionalAuthMiddleware, authMiddleware, AuthenticatedRequest } from '../middlewares/auth.middleware';
 import { roleMiddleware } from '../middlewares/role.middleware';
 import { Role } from '@prisma/client';
-import { AppError } from '../middlewares/error.middleware';
+import { checkoutSchema, guestTrackSchema } from '../utils/validation';
 
 const router = Router();
 
-// Guest Order Tracking (Public)
+// Guest Order Tracking (Secured Public Route - Requires exact Order ID and Phone)
 router.post(
   '/guest-track',
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { phone, orderId } = req.body;
-      if (!phone) {
-        throw new AppError('Phone number is required for tracking', 400, 'BAD_REQUEST');
-      }
-      const data = await OrderService.getGuestOrders(phone, orderId);
-      sendSuccessResponse(res, 200, 'Guest orders retrieved successfully', data);
+      const parsed = guestTrackSchema.parse(req.body);
+      const data = await OrderService.trackGuestOrder(parsed.phone, parsed.orderId);
+      sendSuccessResponse(res, 200, 'Order tracked successfully', data);
     } catch (err) {
       next(err);
     }
@@ -32,35 +29,21 @@ router.post(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const authUserId = req.user?.userId;
-      const {
-        customerName,
-        email,
-        phone,
-        shippingAddress,
-        items,
-        note,
-        couponCode,
-        shippingCost,
-        discountApplied,
-        paymentMethod,
-        paymentPhone,
-        trxId
-      } = req.body;
+      const parsed = checkoutSchema.parse(req.body);
 
       const data = await OrderService.checkout({
         authUserId,
-        customerName,
-        email,
-        phone,
-        shippingAddress,
-        items,
-        note,
-        couponCode,
-        shippingCost,
-        discountApplied,
-        paymentMethod,
-        paymentPhone,
-        trxId
+        customerName: parsed.customerName,
+        email: parsed.email,
+        phone: parsed.phone,
+        shippingAddress: parsed.shippingAddress,
+        zone: parsed.zone,
+        items: parsed.items,
+        note: parsed.note,
+        couponCode: parsed.couponCode,
+        paymentMethod: parsed.paymentMethod,
+        paymentPhone: parsed.paymentPhone,
+        trxId: parsed.trxId
       });
 
       sendSuccessResponse(res, 201, 'Order placed successfully', data);
@@ -69,6 +52,7 @@ router.post(
     }
   }
 );
+
 
 // Require authentication for all user order management routes below
 router.use(authMiddleware as any);

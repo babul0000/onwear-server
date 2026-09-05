@@ -53,3 +53,30 @@ export const updateReviewSchema = z.object({
   rating: z.number().int().min(1).max(5).optional(),
   comment: z.string().optional()
 });
+
+export const checkoutItemSchema = z.object({
+  productId: z.string().min(1, 'Product ID is required'),
+  quantity: z.number().int().positive('Quantity must be at least 1'),
+  size: z.string().nullable().optional(),
+  color: z.string().nullable().optional()
+});
+
+export const checkoutSchema = z.object({
+  customerName: z.string().min(1, 'Full name is required'),
+  email: z.string().email('A valid email address is required'),
+  phone: z.string().min(6, 'A valid phone number is required'),
+  shippingAddress: z.string().min(3, 'Shipping address is required'),
+  zone: z.enum(['inside', 'outside']).optional().default('inside'),
+  items: z.array(checkoutItemSchema).optional(),
+  note: z.string().optional(),
+  couponCode: z.string().optional(),
+  paymentMethod: z.enum(['COD', 'BKASH', 'NAGAD', 'ONLINE']).optional().default('COD'),
+  paymentPhone: z.string().optional(),
+  trxId: z.string().optional()
+});
+
+export const guestTrackSchema = z.object({
+  phone: z.string().min(6, 'Phone number is required'),
+  orderId: z.string().min(1, 'Order ID is required')
+});
+

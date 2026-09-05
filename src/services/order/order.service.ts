@@ -4,6 +4,8 @@ import { AppError } from '../../middlewares/error.middleware';
 import { OrderStatus, PaymentStatus, AccountStatus, CreatedFrom, Role } from '@prisma/client';
 import { EmailService } from '../email/email.service';
 import { SmsService } from '../sms/sms.service';
+import { SettingService } from '../setting/setting.service';
+import { CouponService } from '../coupon/coupon.service';
 
 export interface CheckoutInput {
   authUserId?: string;
@@ -11,6 +13,7 @@ export interface CheckoutInput {
   email: string;
   phone: string;
   shippingAddress: string;
+  zone?: 'inside' | 'outside' | string;
   items?: Array<{
     productId: string;
     quantity: number;
@@ -19,8 +22,6 @@ export interface CheckoutInput {
   }>;
   note?: string;
   couponCode?: string;
-  shippingCost?: number;
-  discountApplied?: number;
   paymentMethod?: string;
   paymentPhone?: string;
   trxId?: string;
@@ -34,11 +35,10 @@ export class OrderService {
       email,
       phone,
       shippingAddress,
+      zone = 'inside',
       items: rawItems,
       note,
       couponCode,
-      shippingCost,
-      discountApplied,
       paymentMethod = 'COD',
       paymentPhone,
       trxId
@@ -105,7 +105,14 @@ export class OrderService {
       throw new AppError('Cannot place an order with an empty cart', 400, 'BAD_REQUEST');
     }
 
-    // 3. Execute Transaction
+    // 3. Securely determine shipping cost from Store Settings
+    const storeSettings = await SettingService.getSettings();
+    const isOutside = zone === 'outside' || shippingAddress.toLowerCase().includes('outside dhaka');
+    const calculatedShippingCost = isOutside
+      ? storeSettings.shippingOutsideDhaka
+      : storeSettings.shippingInsideDhaka;
+
+    // 4. Execute Transaction with Concurrency-Safe Decrement & Server-Side Price Calculation
     const orderResult = await prisma.$transaction(async (tx) => {
       // If user doesn't exist yet, create them inside transaction
       if (!targetUserId) {
@@ -158,7 +165,7 @@ export class OrderService {
         });
 
         if (!product || product.isDeleted || product.status !== 'ACTIVE') {
-          throw new AppError(`Product is no longer available`, 400, 'BAD_REQUEST');
+          throw new AppError(`Product "${product?.name || 'Item'}" is no longer available`, 400, 'BAD_REQUEST');
         }
 
         if (product.stock < item.quantity) {
@@ -170,19 +177,39 @@ export class OrderService {
         }
 
         const priceSnap =
-          product.discountPrice !== null ? product.discountPrice : product.price;
+          product.discountPrice !== null && product.discountPrice !== undefined
+            ? product.discountPrice
+            : product.price;
         const subtotal = priceSnap * item.quantity;
         itemsTotal += subtotal;
 
-        // Reduce stock
-        const updatedProduct = await tx.product.update({
-          where: { id: item.productId },
+        // Atomic conditional decrement to eliminate race conditions
+        const updatedProductCount = await tx.product.updateMany({
+          where: {
+            id: item.productId,
+            stock: { gte: item.quantity },
+            status: 'ACTIVE',
+            isDeleted: false
+          },
           data: {
             stock: { decrement: item.quantity }
           }
         });
 
-        if (updatedProduct.stock === 0) {
+        if (updatedProductCount.count === 0) {
+          throw new AppError(
+            `Stock for "${product.name}" was just reserved by another order. Please adjust quantity.`,
+            400,
+            'OUT_OF_STOCK'
+          );
+        }
+
+        const currentStockCheck = await tx.product.findUnique({
+          where: { id: item.productId },
+          select: { stock: true }
+        });
+
+        if (currentStockCheck && currentStockCheck.stock === 0) {
           await tx.product.update({
             where: { id: item.productId },
             data: { status: 'OUT_OF_STOCK' }
@@ -200,15 +227,27 @@ export class OrderService {
         });
       }
 
-      // Calculate final total
-      const totalAmount = Math.max(0, itemsTotal - (discountApplied || 0) + (shippingCost || 0));
+      // Validate coupon securely on server
+      let calculatedDiscount = 0;
+      let validatedCouponCode: string | null = null;
 
-      if (couponCode) {
-        await tx.coupon.updateMany({
-          where: { code: { equals: couponCode.trim(), mode: 'insensitive' } },
+      if (couponCode && couponCode.trim()) {
+        const couponResult = await CouponService.validateCoupon(
+          couponCode.trim(),
+          itemsTotal,
+          targetUserId
+        );
+        calculatedDiscount = couponResult.discountApplied;
+        validatedCouponCode = couponResult.code;
+
+        await tx.coupon.update({
+          where: { id: couponResult.couponId },
           data: { usedCount: { increment: 1 } }
         });
       }
+
+      // Calculate final total securely on the server
+      const totalAmount = Math.max(0, itemsTotal - calculatedDiscount + calculatedShippingCost);
 
       // Create Order linked to user
       const createdOrder = await tx.order.create({
@@ -219,9 +258,9 @@ export class OrderService {
           phone: cleanPhone,
           email: normalizedEmail,
           note: note || null,
-          shippingCost: shippingCost || 0,
-          couponCode: couponCode || null,
-          discountApplied: discountApplied || 0,
+          shippingCost: calculatedShippingCost,
+          couponCode: validatedCouponCode,
+          discountApplied: calculatedDiscount,
           paymentMethod: paymentMethod || 'COD',
           paymentPhone: paymentPhone || null,
           trxId: trxId || null,
@@ -246,9 +285,8 @@ export class OrderService {
       return createdOrder;
     });
 
-    // 4. Trigger Safe Asynchronous Email & SMS Dispatch (non-blocking)
+    // 5. Trigger Safe Asynchronous Email & SMS Dispatch (non-blocking)
     if (autoAccountCreated && activationRawToken) {
-      // Fire and forget activation email
       EmailService.sendAccountActivationEmail({
         to: normalizedEmail,
         name: cleanName,
@@ -256,7 +294,6 @@ export class OrderService {
         orderId: orderResult.id
       }).catch((err) => console.error('[OrderService] Async activation email dispatch error:', err));
 
-      // Fire and forget activation SMS
       SmsService.sendActivationSms({
         phone: cleanPhone,
         name: cleanName,
@@ -264,14 +301,12 @@ export class OrderService {
       }).catch((err) => console.error('[OrderService] Async activation SMS dispatch error:', err));
     }
 
-    // Send Order Confirmation Email
     EmailService.sendOrderConfirmationEmail({
       to: normalizedEmail,
       name: cleanName,
       order: orderResult
     }).catch((err) => console.error('[OrderService] Async order confirmation email error:', err));
 
-    // Send Order Confirmation SMS
     SmsService.sendOrderConfirmationSms({
       phone: cleanPhone,
       orderId: orderResult.id,
@@ -309,7 +344,7 @@ export class OrderService {
     }
 
     return prisma.$transaction(async (tx) => {
-      // 1. Restock items
+      // 1. Restock items atomically
       for (const item of order.items) {
         await tx.product.update({
           where: { id: item.productId },
@@ -393,19 +428,31 @@ export class OrderService {
     });
   }
 
-  static async getGuestOrders(phone: string, orderId?: string) {
+  static async trackGuestOrder(phone: string, orderId: string) {
     const cleanPhone = phone.trim();
-    return prisma.order.findMany({
+    const cleanOrderId = orderId.trim();
+
+    const order = await prisma.order.findFirst({
       where: {
+        id: cleanOrderId,
         phone: cleanPhone,
-        ...(orderId && { id: orderId.trim() }),
         isDeleted: false
       },
       include: {
         items: true
-      },
-      orderBy: { createdAt: 'desc' }
+      }
     });
+
+    if (!order) {
+      throw new AppError(
+        'No order found matching the provided Order ID and Phone Number. Please verify and try again.',
+        404,
+        'NOT_FOUND'
+      );
+    }
+
+    return order;
   }
 }
+
 
