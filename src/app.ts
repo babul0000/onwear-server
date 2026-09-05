@@ -42,7 +42,22 @@ app.use(
 );
 app.use(
   cors({
-    origin: env.FRONTEND_URL,
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      const allowedOrigins = [
+        env.FRONTEND_URL,
+        'http://localhost:3000',
+        'http://localhost:3001'
+      ];
+      if (
+        allowedOrigins.includes(origin) ||
+        origin.endsWith('.vercel.app') ||
+        origin.includes('onwear')
+      ) {
+        return callback(null, true);
+      }
+      return callback(null, true); // Permissive for REST API clients
+    },
     credentials: true
   })
 );
