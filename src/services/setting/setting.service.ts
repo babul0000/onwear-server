@@ -29,7 +29,16 @@ export class SettingService {
           nagadNumber: '01603742963',
           whatsappNumber: '8801603742963',
           shippingInsideDhaka: 80,
-          shippingOutsideDhaka: 150
+          shippingOutsideDhaka: 150,
+          freeShippingMinAmount: 2500,
+          announcementText: '🎉 Free Shipping on all orders above Tk 2,500! Use coupon ONWEAR10',
+          announcementEnabled: true,
+          announcementLink: '/products',
+          lookbookTitle: 'THE SIGNATURE COLLECTION',
+          lookbookSubtitle: 'THE DENIM OVERCOAT LOOK',
+          lookbookDescription: 'Combine our signature Indigo Denim Overshirt with tailormade stretch pants for a modern casual lookup that fits both office work and weekend outings.',
+          lookbookImageUrl: 'https://images.unsplash.com/photo-1488161628813-04466f872be2?q=80&w=1000',
+          lookbookLinkUrl: '/products?category=denim'
         }
       });
     }
@@ -52,6 +61,15 @@ export class SettingService {
     whatsappNumber?: string;
     shippingInsideDhaka?: number;
     shippingOutsideDhaka?: number;
+    freeShippingMinAmount?: number;
+    announcementText?: string | null;
+    announcementEnabled?: boolean;
+    announcementLink?: string | null;
+    lookbookTitle?: string | null;
+    lookbookSubtitle?: string | null;
+    lookbookDescription?: string | null;
+    lookbookImageUrl?: string | null;
+    lookbookLinkUrl?: string | null;
   }) {
     // Ensure default settings exist first
     await this.getSettings();
@@ -71,6 +89,15 @@ export class SettingService {
     if (data.whatsappNumber !== undefined) updateData.whatsappNumber = data.whatsappNumber;
     if (data.shippingInsideDhaka !== undefined) updateData.shippingInsideDhaka = Number(data.shippingInsideDhaka);
     if (data.shippingOutsideDhaka !== undefined) updateData.shippingOutsideDhaka = Number(data.shippingOutsideDhaka);
+    if (data.freeShippingMinAmount !== undefined) updateData.freeShippingMinAmount = Number(data.freeShippingMinAmount);
+    if (data.announcementText !== undefined) updateData.announcementText = data.announcementText;
+    if (data.announcementEnabled !== undefined) updateData.announcementEnabled = !!data.announcementEnabled;
+    if (data.announcementLink !== undefined) updateData.announcementLink = data.announcementLink;
+    if (data.lookbookTitle !== undefined) updateData.lookbookTitle = data.lookbookTitle;
+    if (data.lookbookSubtitle !== undefined) updateData.lookbookSubtitle = data.lookbookSubtitle;
+    if (data.lookbookDescription !== undefined) updateData.lookbookDescription = data.lookbookDescription;
+    if (data.lookbookImageUrl !== undefined) updateData.lookbookImageUrl = data.lookbookImageUrl;
+    if (data.lookbookLinkUrl !== undefined) updateData.lookbookLinkUrl = data.lookbookLinkUrl;
 
     const updated = await prisma.storeSetting.update({
       where: { id: 'default' },
@@ -81,3 +108,4 @@ export class SettingService {
     return updated;
   }
 }
+

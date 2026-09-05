@@ -398,21 +398,30 @@ model CodReconciliation {
 
 // Store settings model
 model StoreSetting {
-  id                  String   @id @default("default")
-  storeName           String   @default("ONWEAR")
-  tagline             String   @default("Unique way of elegance.")
-  logoUrl             String?
-  phone               String   @default("01603-742963")
-  email               String   @default("onwear.25@gmail.com")
-  address             String   @default("Khilkhet, Dhaka, Bangladesh, 1229")
-  facebookUrl         String   @default("https://facebook.com/onwear.bd")
-  instagramUrl        String   @default("https://instagram.com/onwear_bd")
-  bkashNumber         String   @default("01603742963")
-  nagadNumber         String   @default("01603742963")
-  whatsappNumber      String   @default("8801603742963")
-  shippingInsideDhaka Float    @default(80)
-  shippingOutsideDhaka Float    @default(150)
-  updatedAt           DateTime @updatedAt
+  id                    String   @id @default("default")
+  storeName             String   @default("ONWEAR")
+  tagline               String   @default("Unique way of elegance.")
+  logoUrl               String?
+  phone                 String   @default("01603-742963")
+  email                 String   @default("onwear.25@gmail.com")
+  address               String   @default("Khilkhet, Dhaka, Bangladesh, 1229")
+  facebookUrl           String   @default("https://facebook.com/onwear.bd")
+  instagramUrl          String   @default("https://instagram.com/onwear_bd")
+  bkashNumber           String   @default("01603742963")
+  nagadNumber           String   @default("01603742963")
+  whatsappNumber        String   @default("8801603742963")
+  shippingInsideDhaka   Float    @default(80)
+  shippingOutsideDhaka  Float    @default(150)
+  freeShippingMinAmount Float    @default(2500)
+  announcementText      String?  @default("🎉 Free Shipping on all orders above Tk 2,500! Use coupon ONWEAR10")
+  announcementEnabled   Boolean  @default(true)
+  announcementLink      String?  @default("/products")
+  lookbookTitle         String?  @default("THE SIGNATURE COLLECTION")
+  lookbookSubtitle      String?  @default("THE DENIM OVERCOAT LOOK")
+  lookbookDescription   String?  @default("Combine our signature Indigo Denim Overshirt with tailormade stretch pants for a modern casual lookup that fits both office work and weekend outings.")
+  lookbookImageUrl      String?  @default("https://images.unsplash.com/photo-1488161628813-04466f872be2?q=80&w=1000")
+  lookbookLinkUrl       String?  @default("/products?category=denim")
+  updatedAt             DateTime @updatedAt
 
   @@map("store_settings")
 }

@@ -11,7 +11,8 @@ router.get(
       const settings = await SettingService.getSettings();
       sendSuccessResponse(res, 200, 'Shipping rates retrieved successfully', {
         insideDhaka: settings.shippingInsideDhaka,
-        outsideDhaka: settings.shippingOutsideDhaka
+        outsideDhaka: settings.shippingOutsideDhaka,
+        freeShippingMinAmount: settings.freeShippingMinAmount || 0
       });
     } catch (err) {
       next(err);

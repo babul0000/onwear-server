@@ -246,8 +246,14 @@ export class OrderService {
         });
       }
 
+      // Check for dynamic free shipping threshold
+      let finalShippingCost = calculatedShippingCost;
+      if (storeSettings.freeShippingMinAmount > 0 && itemsTotal >= storeSettings.freeShippingMinAmount) {
+        finalShippingCost = 0;
+      }
+
       // Calculate final total securely on the server
-      const totalAmount = Math.max(0, itemsTotal - calculatedDiscount + calculatedShippingCost);
+      const totalAmount = Math.max(0, itemsTotal - calculatedDiscount + finalShippingCost);
 
       // Create Order linked to user
       const createdOrder = await tx.order.create({
@@ -258,7 +264,7 @@ export class OrderService {
           phone: cleanPhone,
           email: normalizedEmail,
           note: note || null,
-          shippingCost: calculatedShippingCost,
+          shippingCost: finalShippingCost,
           couponCode: validatedCouponCode,
           discountApplied: calculatedDiscount,
           paymentMethod: paymentMethod || 'COD',
