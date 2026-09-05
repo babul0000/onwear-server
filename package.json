@@ -1,7 +1,7 @@
 {
-  "name": "shopnest-server",
+  "name": "onwear-server",
   "version": "1.0.0",
-  "description": "ShopNest E-Commerce Platform Backend REST API",
+  "description": "ONWEAR E-Commerce Platform Backend REST API",
   "main": "dist/server.js",
   "scripts": {
     "dev": "nodemon --watch src --ext ts --exec ts-node src/server.ts",
