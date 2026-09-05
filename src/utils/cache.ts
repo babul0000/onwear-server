@@ -114,7 +114,7 @@ class CacheManager {
   async clearPattern(pattern: string): Promise<void> {
     if (this.isRedisAvailable && this.redis) {
       try {
-        const stream = this.redis.scanStream({ match: pattern });
+        const stream: any = this.redis.scanStream({ match: pattern });
         stream.on('data', async (keys: string[]) => {
           if (keys.length > 0) {
             const pipeline = this.redis!.pipeline();
