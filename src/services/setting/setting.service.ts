@@ -38,7 +38,13 @@ export class SettingService {
           lookbookSubtitle: 'THE DENIM OVERCOAT LOOK',
           lookbookDescription: 'Combine our signature Indigo Denim Overshirt with tailormade stretch pants for a modern casual lookup that fits both office work and weekend outings.',
           lookbookImageUrl: 'https://i.ibb.co/FqHjfvxG/Gemini-Generated-Image-ino58qino58qino5.jpg',
-          lookbookLinkUrl: '/products?category=denim'
+          lookbookLinkUrl: '/products?category=denim',
+          loginImageUrl: 'https://i.ibb.co/HTB1fbYf/On-Wear-unique-way-of-elegance-1-jpg-2.jpg',
+          loginTitle: 'ELEVATE STYLE',
+          loginSubtitle: 'Find your signature clothing comfort at ONWEAR',
+          registerImageUrl: 'https://i.ibb.co/FqHjfvxG/Gemini-Generated-Image-ino58qino58qino5.jpg',
+          registerTitle: 'START JOURNEY',
+          registerSubtitle: 'Join ONWEAR to unlock VIP privileges, track orders & save wishlists'
         }
       });
     }
@@ -70,6 +76,12 @@ export class SettingService {
     lookbookDescription?: string | null;
     lookbookImageUrl?: string | null;
     lookbookLinkUrl?: string | null;
+    loginImageUrl?: string | null;
+    loginTitle?: string | null;
+    loginSubtitle?: string | null;
+    registerImageUrl?: string | null;
+    registerTitle?: string | null;
+    registerSubtitle?: string | null;
   }) {
     // Ensure default settings exist first
     await this.getSettings();
@@ -98,6 +110,12 @@ export class SettingService {
     if (data.lookbookDescription !== undefined) updateData.lookbookDescription = data.lookbookDescription;
     if (data.lookbookImageUrl !== undefined) updateData.lookbookImageUrl = data.lookbookImageUrl;
     if (data.lookbookLinkUrl !== undefined) updateData.lookbookLinkUrl = data.lookbookLinkUrl;
+    if (data.loginImageUrl !== undefined) updateData.loginImageUrl = data.loginImageUrl;
+    if (data.loginTitle !== undefined) updateData.loginTitle = data.loginTitle;
+    if (data.loginSubtitle !== undefined) updateData.loginSubtitle = data.loginSubtitle;
+    if (data.registerImageUrl !== undefined) updateData.registerImageUrl = data.registerImageUrl;
+    if (data.registerTitle !== undefined) updateData.registerTitle = data.registerTitle;
+    if (data.registerSubtitle !== undefined) updateData.registerSubtitle = data.registerSubtitle;
 
     const updated = await prisma.storeSetting.update({
       where: { id: 'default' },

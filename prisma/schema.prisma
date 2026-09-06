@@ -422,8 +422,14 @@ model StoreSetting {
   lookbookTitle         String?  @default("THE SIGNATURE COLLECTION")
   lookbookSubtitle      String?  @default("THE DENIM OVERCOAT LOOK")
   lookbookDescription   String?  @default("Combine our signature Indigo Denim Overshirt with tailormade stretch pants for a modern casual lookup that fits both office work and weekend outings.")
-  lookbookImageUrl      String?  @default("https://images.unsplash.com/photo-1488161628813-04466f872be2?q=80&w=1000")
+  lookbookImageUrl      String?  @default("https://i.ibb.co/FqHjfvxG/Gemini-Generated-Image-ino58qino58qino58qino5.jpg")
   lookbookLinkUrl       String?  @default("/products?category=denim")
+  loginImageUrl         String?  @default("https://i.ibb.co/HTB1fbYf/On-Wear-unique-way-of-elegance-1-jpg-2.jpg")
+  loginTitle            String?  @default("ELEVATE STYLE")
+  loginSubtitle         String?  @default("Find your signature clothing comfort at ONWEAR")
+  registerImageUrl      String?  @default("https://i.ibb.co/FqHjfvxG/Gemini-Generated-Image-ino58qino58qino5.jpg")
+  registerTitle         String?  @default("START JOURNEY")
+  registerSubtitle      String?  @default("Join ONWEAR to unlock VIP privileges, track orders & save wishlists")
   updatedAt             DateTime @updatedAt
 
   @@map("store_settings")
