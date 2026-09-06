@@ -61,45 +61,52 @@ export class PromotionService {
     const cached = await cache.get<any[]>(SLIDES_CACHE_KEY);
     if (cached) return cached;
 
-    const titles = ['Hero Slide 1', 'Hero Slide 2', 'Hero Slide 3'];
-    let slides = await prisma.promotion.findMany({
-      where: { title: { in: titles } },
-      orderBy: { title: 'asc' }
+    let slides = await (prisma as any).promotion.findMany({
+      where: { title: { startsWith: 'Hero Slide' } },
+      orderBy: [
+        { displayOrder: 'asc' },
+        { createdAt: 'asc' }
+      ]
     });
 
-    if (slides.length < 3) {
+    if (slides.length === 0) {
       const defaults = [
         {
           title: 'Hero Slide 1',
           imageUrl: 'https://i.ibb.co/HTB1fbYf/On-Wear-unique-way-of-elegance-1-jpg-2.jpg',
           linkUrl: '/products?category=shirt',
+          positionX: 50,
+          positionY: 50,
+          displayOrder: 0,
           isActive: true
         },
         {
           title: 'Hero Slide 2',
           imageUrl: 'https://i.ibb.co/FqHjfvxG/Gemini-Generated-Image-ino58qino58qino5.jpg',
           linkUrl: '/products?category=denim',
+          positionX: 50,
+          positionY: 50,
+          displayOrder: 1,
           isActive: true
         },
         {
           title: 'Hero Slide 3',
           imageUrl: 'https://i.ibb.co/rVYXTBD/Gemini-Generated-Image-p7ik1p7ik1p7ik1p.jpg',
           linkUrl: '/products?category=winter-collection',
+          positionX: 50,
+          positionY: 50,
+          displayOrder: 2,
           isActive: true
         }
       ];
 
-      await prisma.promotion.deleteMany({
-        where: { title: { in: titles } }
-      });
-
-      await prisma.promotion.createMany({
+      await (prisma as any).promotion.createMany({
         data: defaults
       });
 
-      slides = await prisma.promotion.findMany({
-        where: { title: { in: titles } },
-        orderBy: { title: 'asc' }
+      slides = await (prisma as any).promotion.findMany({
+        where: { title: { startsWith: 'Hero Slide' } },
+        orderBy: { displayOrder: 'asc' }
       });
     }
 
@@ -107,20 +114,37 @@ export class PromotionService {
     return slides;
   }
 
-  static async updateHeroSlides(slides: { id: string; title: string; imageUrl: string; linkUrl: string }[]) {
-    const updates = slides.map(slide => {
-      return prisma.promotion.update({
-        where: { id: slide.id },
-        data: {
-          title: slide.title,
-          imageUrl: slide.imageUrl,
-          linkUrl: slide.linkUrl || null
-        }
-      });
+  static async updateHeroSlides(slides: { id?: string; title: string; imageUrl: string; linkUrl?: string; positionX?: number; positionY?: number }[]) {
+    if (!slides || slides.length === 0) {
+      throw new Error('At least 1 slide is required');
+    }
+
+    // Delete existing slides and recreate in given order to support dynamic slide count (1 to N)
+    await (prisma as any).promotion.deleteMany({
+      where: { title: { startsWith: 'Hero Slide' } }
     });
-    const result = await prisma.$transaction(updates);
+
+    const newSlidesData = slides.map((slide, idx) => ({
+      title: slide.title || `Hero Slide ${idx + 1}`,
+      imageUrl: slide.imageUrl,
+      linkUrl: slide.linkUrl || null,
+      positionX: typeof slide.positionX === 'number' ? slide.positionX : 50,
+      positionY: typeof slide.positionY === 'number' ? slide.positionY : 50,
+      displayOrder: idx,
+      isActive: true,
+    }));
+
+    await (prisma as any).promotion.createMany({
+      data: newSlidesData
+    });
+
+    const updated = await (prisma as any).promotion.findMany({
+      where: { title: { startsWith: 'Hero Slide' } },
+      orderBy: { displayOrder: 'asc' }
+    });
+
     await cache.del(SLIDES_CACHE_KEY);
-    return result;
+    return updated;
   }
 }
 
