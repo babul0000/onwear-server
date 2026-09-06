@@ -37,7 +37,7 @@ export class SettingService {
           lookbookTitle: 'THE SIGNATURE COLLECTION',
           lookbookSubtitle: 'THE DENIM OVERCOAT LOOK',
           lookbookDescription: 'Combine our signature Indigo Denim Overshirt with tailormade stretch pants for a modern casual lookup that fits both office work and weekend outings.',
-          lookbookImageUrl: 'https://images.unsplash.com/photo-1488161628813-04466f872be2?q=80&w=1000',
+          lookbookImageUrl: 'https://i.ibb.co/FqHjfvxG/Gemini-Generated-Image-ino58qino58qino5.jpg',
           lookbookLinkUrl: '/products?category=denim'
         }
       });
