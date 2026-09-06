@@ -18,7 +18,7 @@ export class PromotionService {
       banner = await prisma.promotion.create({
         data: {
           title: 'Hero Cover Photo',
-          imageUrl: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?q=80&w=1600',
+          imageUrl: 'https://i.ibb.co/HTB1fbYf/On-Wear-unique-way-of-elegance-1-jpg-2.jpg',
           isActive: true
         }
       });
@@ -71,19 +71,19 @@ export class PromotionService {
       const defaults = [
         {
           title: 'Hero Slide 1',
-          imageUrl: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?q=80&w=1600',
+          imageUrl: 'https://i.ibb.co/HTB1fbYf/On-Wear-unique-way-of-elegance-1-jpg-2.jpg',
           linkUrl: '/products?category=shirt',
           isActive: true
         },
         {
           title: 'Hero Slide 2',
-          imageUrl: 'https://images.unsplash.com/photo-1488161628813-04466f872be2?q=80&w=1600',
+          imageUrl: 'https://i.ibb.co/FqHjfvxG/Gemini-Generated-Image-ino58qino58qino5.jpg',
           linkUrl: '/products?category=denim',
           isActive: true
         },
         {
           title: 'Hero Slide 3',
-          imageUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=1600',
+          imageUrl: 'https://i.ibb.co/rVYXTBD/Gemini-Generated-Image-p7ik1p7ik1p7ik1p.jpg',
           linkUrl: '/products?category=winter-collection',
           isActive: true
         }
