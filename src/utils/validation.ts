@@ -21,7 +21,8 @@ export const createCategorySchema = z.object({
   description: z.string().optional(),
   image: z.string().optional(),
   status: z.nativeEnum(CategoryStatus).optional(),
-  parentId: z.string().nullable().optional()
+  parentId: z.string().nullable().optional(),
+  displayOrder: z.number().int().optional()
 });
 
 export const updateCategorySchema = createCategorySchema.partial();

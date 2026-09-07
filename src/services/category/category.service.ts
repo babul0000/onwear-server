@@ -37,14 +37,33 @@ export class CategoryService {
           where: {
             isDeleted: false,
             ...(!includeInactive && { status: 'ACTIVE' })
-          }
+          },
+          orderBy: [{ displayOrder: 'asc' }, { name: 'asc' }]
         }
       },
-      orderBy: { name: 'asc' }
+      orderBy: [{ displayOrder: 'asc' }, { name: 'asc' }]
     });
 
     await cache.set(cacheKey, categories, 3600);
     return categories;
+  }
+
+  static async reorder(items: { id: string; displayOrder: number }[]) {
+    if (!Array.isArray(items) || items.length === 0) {
+      return { updated: 0 };
+    }
+
+    await prisma.$transaction(
+      items.map((item) =>
+        prisma.category.update({
+          where: { id: item.id },
+          data: { displayOrder: Number(item.displayOrder) }
+        })
+      )
+    );
+
+    await cache.clearPattern('categories:*');
+    return { updated: items.length };
   }
 
   static async getById(id: string) {

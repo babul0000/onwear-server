@@ -22,6 +22,21 @@ router.get(
   }
 );
 
+// Admin: Reorder categories
+router.put(
+  '/reorder',
+  authMiddleware as any,
+  roleMiddleware(Role.admin) as any,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const data = await CategoryService.reorder(req.body.items || req.body);
+      sendSuccessResponse(res, 200, 'Categories reordered successfully', data);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 // Public: Get category by ID
 router.get(
   '/:id',

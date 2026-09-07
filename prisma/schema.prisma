@@ -126,6 +126,8 @@ model Category {
   status      CategoryStatus @default(ACTIVE)
   isDeleted   Boolean        @default(false)
   
+  displayOrder Int            @default(0)
+  
   parentId    String?
   parent      Category?      @relation("CategoryToSubcategory", fields: [parentId], references: [id], onDelete: Cascade)
   subcategories Category[]   @relation("CategoryToSubcategory")
@@ -137,6 +139,7 @@ model Category {
   @@map("categories")
   @@index([slug])
   @@index([parentId])
+  @@index([displayOrder])
 }
 
 model Product {
