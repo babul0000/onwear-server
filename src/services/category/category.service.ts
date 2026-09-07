@@ -26,23 +26,44 @@ export class CategoryService {
     const cached = await cache.get<any[]>(cacheKey);
     if (cached) return cached;
 
-    const categories = await prisma.category.findMany({
-      where: {
-        parentId: null,
-        isDeleted: false,
-        ...(!includeInactive && { status: 'ACTIVE' })
-      },
-      include: {
-        subcategories: {
-          where: {
-            isDeleted: false,
-            ...(!includeInactive && { status: 'ACTIVE' })
-          },
-          orderBy: [{ displayOrder: 'asc' }, { name: 'asc' }]
-        }
-      },
-      orderBy: [{ displayOrder: 'asc' }, { name: 'asc' }]
-    });
+    let categories;
+    try {
+      categories = await prisma.category.findMany({
+        where: {
+          parentId: null,
+          isDeleted: false,
+          ...(!includeInactive && { status: 'ACTIVE' })
+        },
+        include: {
+          subcategories: {
+            where: {
+              isDeleted: false,
+              ...(!includeInactive && { status: 'ACTIVE' })
+            },
+            orderBy: [{ displayOrder: 'asc' }, { name: 'asc' }]
+          }
+        },
+        orderBy: [{ displayOrder: 'asc' }, { name: 'asc' }]
+      });
+    } catch (err: any) {
+      categories = await prisma.category.findMany({
+        where: {
+          parentId: null,
+          isDeleted: false,
+          ...(!includeInactive && { status: 'ACTIVE' })
+        },
+        include: {
+          subcategories: {
+            where: {
+              isDeleted: false,
+              ...(!includeInactive && { status: 'ACTIVE' })
+            },
+            orderBy: { name: 'asc' }
+          }
+        },
+        orderBy: { name: 'asc' }
+      });
+    }
 
     await cache.set(cacheKey, categories, 3600);
     return categories;
