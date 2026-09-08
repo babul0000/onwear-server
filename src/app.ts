@@ -79,8 +79,15 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static uploaded media files
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+// Serve static uploaded media files with aggressive browser caching
+app.use(
+  '/uploads',
+  express.static(path.join(process.cwd(), 'uploads'), {
+    maxAge: '30d',
+    immutable: true,
+    etag: true
+  })
+);
 
 // Health Check
 app.get('/api/health', (_req, res) => {

@@ -93,7 +93,7 @@ async function main() {
     { name: 'T-Shirt', slug: 't-shirt', description: 'Everyday comfortable tee collection', image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=300' },
     { name: 'Cap', slug: 'cap', description: 'Minimalist dad hats and baseball caps', image: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?q=80&w=300' },
     { name: 'Sandal', slug: 'sandal', description: 'Genuine leather slides and footbed sandals', image: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?q=80&w=300' },
-    { name: 'Winter Collection', slug: 'winter-collection', description: 'Cozy and warm premium clothing layer choices', image: 'https://images.unsplash.com/photo-1610384072347-4860002763d3?q=80&w=300' },
+    { name: 'Winter Collection', slug: 'winter-collection', description: 'Cozy and warm premium clothing layer choices', image: 'https://images.unsplash.com/photo-1578587018452-892bacefd3f2?q=80&w=300' },
     { name: 'Trending', slug: 'trending', description: 'Latest trending street styles and accessories', image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=300' }
   ];
 
@@ -119,7 +119,7 @@ async function main() {
     { name: 'Cargo', slug: 'cargo', description: 'Multi-pocket cargo pants', image: 'https://images.unsplash.com/photo-1517423568366-8b83523034fd?q=80&w=300', parentSlug: 'pant' },
     { name: 'Full Sleeve Polo', slug: 'full-sleeve-polo', description: 'Premium heavy cotton full sleeve polo shirts', image: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?q=80&w=300', parentSlug: 'winter-collection' },
     { name: 'Full Sleeve T-Shirts', slug: 'full-sleeve-t-shirts', description: 'Warm and comfortable full sleeve t-shirts', image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=300', parentSlug: 'winter-collection' },
-    { name: 'Winter Essentials', slug: 'winter-essentials', description: 'Hoodies, jackets, and thermal wear', image: 'https://images.unsplash.com/photo-1610384072347-4860002763d3?q=80&w=300', parentSlug: 'winter-collection' },
+    { name: 'Winter Essentials', slug: 'winter-essentials', description: 'Hoodies, jackets, and thermal wear', image: 'https://images.unsplash.com/photo-1578587018452-892bacefd3f2?q=80&w=300', parentSlug: 'winter-collection' },
     { name: 'Best Sellers', slug: 'best-sellers', description: 'Most ordered styles', image: 'https://images.unsplash.com/photo-1617137968427-85924c800a22?q=80&w=300', parentSlug: 'trending' },
     { name: 'Customer Favorites', slug: 'customer-favorites', description: 'Top rated by buyers', image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=300', parentSlug: 'trending' },
     { name: 'Most Popular', slug: 'most-popular', description: 'High in demand', image: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?q=80&w=300', parentSlug: 'trending' }
@@ -144,7 +144,7 @@ async function main() {
   const productsData = [
     // Shirts
     { name: "Men's Slim Fit Oxford Cotton Shirt", slug: 'mens-slim-fit-oxford-cotton-shirt', price: 49, discountPrice: 39, stock: 15, sku: 'CLOTH-SHIRT-01', image: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?q=80&w=400', image2: 'https://images.unsplash.com/photo-1589310243389-96a5483213a8?q=80&w=400', categorySlug: 'shirt' },
-    { name: "Men's Classic Linen Button-Down Shirt", slug: 'mens-classic-linen-button-down-shirt', price: 55, discountPrice: 45, stock: 20, sku: 'CLOTH-SHIRT-02', image: 'https://images.unsplash.com/photo-1598033129183-c4f50c736f10?q=80&w=400', image2: 'https://images.unsplash.com/photo-1621072156002-e2fcc103e86e?q=80&w=400', categorySlug: 'shirt' },
+    { name: "Men's Classic Linen Button-Down Shirt", slug: 'mens-classic-linen-button-down-shirt', price: 55, discountPrice: 45, stock: 20, sku: 'CLOTH-SHIRT-02', image: 'https://images.unsplash.com/photo-1598033129183-c4f50c736f10?q=80&w=400', image2: 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?q=80&w=400', categorySlug: 'shirt' },
     { name: "Men's Vintage Check Flannel Shirt", slug: 'mens-vintage-check-flannel-shirt', price: 45, discountPrice: null, stock: 12, sku: 'CLOTH-SHIRT-03', image: 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?q=80&w=400', image2: 'https://images.unsplash.com/photo-1596755389378-c31d21fd1273?q=80&w=400', categorySlug: 'shirt' },
 
     // Pants / Subcategories
@@ -158,7 +158,7 @@ async function main() {
     { name: "Men's Classic V-Neck Everyday Tee", slug: 'mens-classic-v-neck-everyday-tee', price: 22, discountPrice: null, stock: 40, sku: 'CLOTH-TEE-03', image: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?q=80&w=400', image2: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=400', categorySlug: 't-shirt' },
 
     // Denim
-    { name: "Men's Classic Straight Fit Denim Jeans", slug: 'mens-classic-straight-fit-denim-jeans', price: 79, discountPrice: 64, stock: 30, sku: 'CLOTH-DENIM-01', image: 'https://images.unsplash.com/photo-1542272604-787c3835535d?q=80&w=400', image2: 'https://images.unsplash.com/photo-1582552938357-32b906df43c3?q=80&w=400', categorySlug: 'denim' },
+    { name: "Men's Classic Straight Fit Denim Jeans", slug: 'mens-classic-straight-fit-denim-jeans', price: 79, discountPrice: 64, stock: 30, sku: 'CLOTH-DENIM-01', image: 'https://images.unsplash.com/photo-1542272604-787c3835535d?q=80&w=400', image2: 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=400', categorySlug: 'denim' },
     { name: "Men's Distressed Denim Rider Jacket", slug: 'mens-distressed-denim-rider-jacket', price: 99, discountPrice: 89, stock: 15, sku: 'CLOTH-DENIM-02', image: 'https://images.unsplash.com/photo-1576995853123-5a10305d93c0?q=80&w=400', image2: 'https://images.unsplash.com/photo-1611312449412-6cefac5dc3e4?q=80&w=400', categorySlug: 'denim' },
     { name: "Men's Denim Indigo Workwear Overshirt", slug: 'mens-denim-indigo-workwear-overshirt', price: 69, discountPrice: null, stock: 22, sku: 'CLOTH-DENIM-03', image: 'https://images.unsplash.com/photo-1516257984-b1b4d707412e?q=80&w=400', image2: 'https://images.unsplash.com/photo-1495105787522-5334e3ffa0ef?q=80&w=400', categorySlug: 'denim' },
 
@@ -172,7 +172,7 @@ async function main() {
 
     // Winter Collection
     { name: "Men's Heavyweight Fleece Hoodie", slug: 'mens-heavyweight-fleece-hoodie', price: 65, discountPrice: 55, stock: 20, sku: 'CLOTH-WINTER-01', image: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=400', image2: 'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?q=80&w=400', categorySlug: 'winter-essentials' },
-    { name: "Men's Premium Heavy Knit Cardigan Sweater", slug: 'mens-premium-heavy-knit-cardigan-sweater', price: 89, discountPrice: null, stock: 15, sku: 'CLOTH-WINTER-02', image: 'https://images.unsplash.com/photo-1610384072347-4860002763d3?q=80&w=400', image2: 'https://images.unsplash.com/photo-1614975058789-41316d0e2e9c?q=80&w=400', categorySlug: 'winter-essentials' },
+    { name: "Men's Premium Heavy Knit Cardigan Sweater", slug: 'mens-premium-heavy-knit-cardigan-sweater', price: 89, discountPrice: null, stock: 15, sku: 'CLOTH-WINTER-02', image: 'https://images.unsplash.com/photo-1578587018452-892bacefd3f2?q=80&w=400', image2: 'https://images.unsplash.com/photo-1614975058789-41316d0e2e9c?q=80&w=400', categorySlug: 'winter-essentials' },
     { name: "Men's Classic Wool Blend Winter Coat", slug: 'mens-classic-wool-blend-winter-coat', price: 149, discountPrice: 129, stock: 8, sku: 'CLOTH-WINTER-03', image: 'https://images.unsplash.com/photo-1544022613-e87ca75a784a?q=80&w=400', image2: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=400', categorySlug: 'winter-essentials' },
     { name: "Men's Regular Fit Full Sleeve Polo Shirt", slug: 'mens-regular-fit-full-sleeve-polo-shirt', price: 39, discountPrice: 34, stock: 22, sku: 'CLOTH-WINTER-04', image: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?q=80&w=400', image2: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?q=80&w=400', categorySlug: 'full-sleeve-polo' },
     { name: "Men's Premium Solid Full Sleeve Tee", slug: 'mens-premium-solid-full-sleeve-tee', price: 29, discountPrice: null, stock: 30, sku: 'CLOTH-WINTER-05', image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=400', image2: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=400', categorySlug: 'full-sleeve-t-shirts' },
