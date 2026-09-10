@@ -91,7 +91,7 @@ export class PromotionService {
         },
         {
           title: 'Hero Slide 3',
-          imageUrl: 'https://i.ibb.co/rVYXTBD/Gemini-Generated-Image-p7ik1p7ik1p7ik1p.jpg',
+          imageUrl: 'https://images.unsplash.com/photo-1544022613-e87ca75a784a?q=80&w=1600',
           linkUrl: '/products?category=winter-collection',
           positionX: 50,
           positionY: 50,
