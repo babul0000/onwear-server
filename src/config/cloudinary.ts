@@ -29,12 +29,12 @@ export const uploadBufferToCloudinary = (
       {
         folder,
         resource_type: 'image',
+        format: 'webp',
         transformation: [
-          {
-            quality: 'auto:good',
-            fetch_format: 'auto',
-            flags: 'lossy'
-          }
+          { width: 2560, crop: 'limit' },
+          { quality: 'auto:good' },
+          { fetch_format: 'auto' },
+          { flags: 'lossy' }
         ]
       },
       (error, result) => {
