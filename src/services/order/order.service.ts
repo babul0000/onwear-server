@@ -461,6 +461,29 @@ export class OrderService {
 
     return order;
   }
+
+  static async deleteOrder(orderId: string, userId: string, role: string) {
+    const order = await prisma.order.findFirst({
+      where: { id: orderId, isDeleted: false }
+    });
+
+    if (!order) {
+      throw new AppError('Order not found', 404, 'NOT_FOUND');
+    }
+
+    if (role !== 'admin' && order.userId !== userId) {
+      throw new AppError('Forbidden: You can only delete your own orders', 403, 'FORBIDDEN');
+    }
+
+    if (role !== 'admin' && order.status !== OrderStatus.CANCELLED) {
+      throw new AppError('Only cancelled orders can be removed from order history', 400, 'CANNOT_DELETE');
+    }
+
+    return prisma.order.update({
+      where: { id: orderId },
+      data: { isDeleted: true }
+    });
+  }
 }
 
 

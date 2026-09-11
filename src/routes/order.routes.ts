@@ -118,4 +118,19 @@ router.patch(
   }
 );
 
+// Customer / Admin: Delete order from history (Customers can only delete CANCELLED orders)
+router.delete(
+  '/:id',
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userId = req.user!.userId;
+      const role = req.user!.role;
+      const data = await OrderService.deleteOrder(req.params.id, userId, role);
+      sendSuccessResponse(res, 200, 'Order removed from history successfully', data);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 export default router;
