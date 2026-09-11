@@ -64,6 +64,9 @@ export class ProductService {
   }
 
   static async getAll(query: any, includeDeleted: boolean = false) {
+    // Trigger auto-purge of expired soft-deleted items (>5 days old) in background
+    ProductService.purgeExpired(5).catch(() => {});
+
     const cacheKey = `products:list:${JSON.stringify(query)}:${includeDeleted}`;
     const cached = await cache.get<any>(cacheKey);
     if (cached) return cached;
@@ -72,9 +75,14 @@ export class ProductService {
     const limit = parseInt(query.limit as string) || 12;
     const skip = (page - 1) * limit;
 
-    const where: any = {
-      isDeleted: includeDeleted ? undefined : false
-    };
+    const where: any = {};
+    if (query.onlyDeleted === 'true') {
+      where.isDeleted = true;
+    } else if (includeDeleted) {
+      where.isDeleted = undefined;
+    } else {
+      where.isDeleted = false;
+    }
 
     // Search query: name or description
     if (query.search) {
@@ -289,14 +297,93 @@ export class ProductService {
       where: { id, isDeleted: false }
     });
     if (!product) {
-      throw new AppError('Product not found', 404, 'NOT_FOUND');
+      throw new AppError('Product not found or already deleted', 404, 'NOT_FOUND');
     }
 
-    const deletedProduct = await prisma.product.update({
+    const deletedProduct = await (prisma.product as any).update({
       where: { id },
-      data: { isDeleted: true }
+      data: { isDeleted: true, deletedAt: new Date() }
     });
     await cache.clearPattern('products:*');
     return deletedProduct;
+  }
+
+  static async hardDelete(id: string) {
+    const product = await prisma.product.findUnique({
+      where: { id }
+    });
+    if (!product) {
+      throw new AppError('Product not found', 404, 'NOT_FOUND');
+    }
+
+    // Remove dependent records
+    await prisma.cartItem.deleteMany({ where: { productId: id } }).catch(() => {});
+    await prisma.wishlistItem.deleteMany({ where: { productId: id } }).catch(() => {});
+    await prisma.review.deleteMany({ where: { productId: id } }).catch(() => {});
+    
+    // Decouple order items so historic purchases and receipts are preserved safely
+    await prisma.orderItem.updateMany({
+      where: { productId: id },
+      data: { productId: null }
+    }).catch(() => {});
+
+    const deleted = await prisma.product.delete({
+      where: { id }
+    });
+    await cache.clearPattern('products:*');
+    return deleted;
+  }
+
+  static async restore(id: string) {
+    const product = await prisma.product.findFirst({
+      where: { id, isDeleted: true }
+    });
+    if (!product) {
+      throw new AppError('Deleted product not found in trash', 404, 'NOT_FOUND');
+    }
+
+    const restoredProduct = await (prisma.product as any).update({
+      where: { id },
+      data: { isDeleted: false, deletedAt: null }
+    });
+    await cache.clearPattern('products:*');
+    return restoredProduct;
+  }
+
+  static async purgeExpired(days: number = 5) {
+    try {
+      const threshold = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+      const expired = await (prisma.product as any).findMany({
+        where: {
+          isDeleted: true,
+          OR: [
+            { deletedAt: { lte: threshold } },
+            { deletedAt: null, updatedAt: { lte: threshold } }
+          ]
+        },
+        select: { id: true }
+      });
+
+      for (const p of expired) {
+        await ProductService.hardDelete(p.id).catch(() => {});
+      }
+      return expired.length;
+    } catch {
+      return 0;
+    }
+  }
+
+  static async purgeAllDeleted() {
+    const deletedProducts = await prisma.product.findMany({
+      where: { isDeleted: true },
+      select: { id: true }
+    });
+
+    let count = 0;
+    for (const p of deletedProducts) {
+      await ProductService.hardDelete(p.id).catch(() => {});
+      count++;
+    }
+    return count;
   }
 }

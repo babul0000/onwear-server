@@ -64,15 +64,51 @@ router.patch(
   }
 );
 
-// Admin: Delete product (Soft Delete)
+// Admin: Purge all deleted products immediately (Hard delete)
+router.post(
+  '/purge-deleted',
+  authMiddleware as any,
+  roleMiddleware(Role.admin) as any,
+  async (_req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const count = await ProductService.purgeAllDeleted();
+      sendSuccessResponse(res, 200, `${count} deleted product(s) permanently removed from database`, { count });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// Admin: Restore soft-deleted product
+router.post(
+  '/:id/restore',
+  authMiddleware as any,
+  roleMiddleware(Role.admin) as any,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const data = await ProductService.restore(req.params.id);
+      sendSuccessResponse(res, 200, 'Product restored successfully from trash', data);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// Admin: Delete product (Soft Delete or Permanent Hard Delete)
 router.delete(
   '/:id',
   authMiddleware as any,
   roleMiddleware(Role.admin) as any,
   async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
-      await ProductService.softDelete(req.params.id);
-      sendSuccessResponse(res, 200, 'Product deleted successfully', null);
+      const isPermanent = req.query.permanent === 'true';
+      if (isPermanent) {
+        await ProductService.hardDelete(req.params.id);
+        sendSuccessResponse(res, 200, 'Product permanently deleted from database', null);
+      } else {
+        await ProductService.softDelete(req.params.id);
+        sendSuccessResponse(res, 200, 'Product moved to trash (auto-deletes in 5 days)', null);
+      }
     } catch (err) {
       next(err);
     }

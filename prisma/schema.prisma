@@ -158,6 +158,7 @@ model Product {
   categoryId    String
   category      Category        @relation(fields: [categoryId], references: [id])
   isDeleted     Boolean         @default(false)
+  deletedAt     DateTime?
   isResellerOnly Boolean        @default(false)
   sizeChartUrl   String?
   createdAt     DateTime        @default(now())
@@ -281,8 +282,8 @@ model OrderItem {
   id          String   @id @default(uuid())
   orderId     String
   order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId   String
-  product     Product  @relation(fields: [productId], references: [id])
+  productId   String?
+  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
   productName String
   price       Float
   quantity    Int

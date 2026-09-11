@@ -352,13 +352,15 @@ export class OrderService {
     return prisma.$transaction(async (tx) => {
       // 1. Restock items atomically
       for (const item of order.items) {
-        await tx.product.update({
-          where: { id: item.productId },
-          data: {
-            stock: { increment: item.quantity },
-            status: 'ACTIVE'
-          }
-        });
+        if (item.productId) {
+          await tx.product.update({
+            where: { id: item.productId },
+            data: {
+              stock: { increment: item.quantity },
+              status: 'ACTIVE'
+            }
+          });
+        }
       }
 
       // 2. Update order status to CANCELLED
