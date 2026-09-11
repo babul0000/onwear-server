@@ -46,6 +46,36 @@ export class CouponService {
     });
   }
 
+  static async update(id: string, data: any) {
+    const existing = await prisma.coupon.findUnique({ where: { id } });
+    if (!existing) {
+      throw new AppError('Coupon not found', 404, 'NOT_FOUND');
+    }
+
+    return prisma.coupon.update({
+      where: { id },
+      data: {
+        code: data.code ? data.code.trim().toUpperCase() : undefined,
+        discountType: data.discountType,
+        discountValue: data.discountValue !== undefined ? Number(data.discountValue) : undefined,
+        minPurchase: data.minPurchase !== undefined ? Number(data.minPurchase) : undefined,
+        firstOrderOnly: data.firstOrderOnly !== undefined ? !!data.firstOrderOnly : undefined,
+        isActive: data.isActive !== undefined ? !!data.isActive : undefined,
+        expiryDate: data.expiryDate !== undefined ? (data.expiryDate ? new Date(data.expiryDate) : null) : undefined,
+        totalLimit: data.totalLimit !== undefined ? Number(data.totalLimit) : undefined,
+        userLimit: data.userLimit !== undefined ? Number(data.userLimit) : undefined
+      }
+    });
+  }
+
+  static async delete(id: string) {
+    const existing = await prisma.coupon.findUnique({ where: { id } });
+    if (!existing) {
+      throw new AppError('Coupon not found', 404, 'NOT_FOUND');
+    }
+    return prisma.coupon.delete({ where: { id } });
+  }
+
   static async validateCoupon(code: string, subtotal: number, userId?: string) {
     if (!code) {
       throw new AppError('Coupon code is required', 400, 'BAD_REQUEST');

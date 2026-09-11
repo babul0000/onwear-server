@@ -37,6 +37,36 @@ router.get(
   }
 );
 
+// Admin: Update a coupon
+router.patch(
+  '/:id',
+  authMiddleware as any,
+  roleMiddleware(Role.admin) as any,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const data = await CouponService.update(req.params.id, req.body);
+      sendSuccessResponse(res, 200, 'Coupon updated successfully', data);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// Admin: Delete a coupon
+router.delete(
+  '/:id',
+  authMiddleware as any,
+  roleMiddleware(Role.admin) as any,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const data = await CouponService.delete(req.params.id);
+      sendSuccessResponse(res, 200, 'Coupon deleted successfully', data);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 router.post(
   '/validate',
   authMiddleware as any,
