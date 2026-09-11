@@ -59,8 +59,15 @@ router.delete(
   roleMiddleware(Role.admin) as any,
   async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
+      if (req.user!.userId === req.params.id) {
+        res.status(400).json({
+          success: false,
+          message: 'You cannot delete your own admin account'
+        });
+        return;
+      }
       await UserService.softDelete(req.params.id);
-      sendSuccessResponse(res, 200, 'User deleted successfully', null);
+      sendSuccessResponse(res, 200, 'User deleted successfully', { deletedId: req.params.id });
     } catch (err) {
       next(err);
     }
