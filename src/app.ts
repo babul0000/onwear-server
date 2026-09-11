@@ -24,8 +24,7 @@ import settingRoutes from './routes/setting.routes';
 import paymentRoutes from './routes/payment.routes';
 import campaignRoutes from './routes/campaign.routes';
 import addressRoutes from './routes/address.routes';
-
-
+import analyticsRoutes from './routes/analytics.routes';
 import path from 'path';
 import uploadRoutes from './routes/upload.routes';
 
@@ -120,7 +119,7 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/campaigns', campaignRoutes);
 app.use('/api/addresses', addressRoutes);
 app.use('/api/upload', uploadRoutes);
-
+app.use('/api/analytics', analyticsRoutes);
 
 // Fallback Middlewares
 app.use(notFoundMiddleware);

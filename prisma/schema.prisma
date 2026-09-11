@@ -161,6 +161,7 @@ model Product {
   deletedAt     DateTime?
   isResellerOnly Boolean        @default(false)
   sizeChartUrl   String?
+  views         Int             @default(0)
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
   reviews       Review[]
@@ -459,6 +460,31 @@ model Address {
 
   @@map("addresses")
   @@index([userId])
+}
+
+model VisitorLog {
+  id        String   @id @default(uuid())
+  sessionId String?
+  path      String?
+  userAgent String?
+  ipHash    String?
+  userId    String?
+  createdAt DateTime @default(now())
+
+  @@map("visitor_logs")
+  @@index([createdAt])
+  @@index([sessionId])
+}
+
+model ProductViewLog {
+  id        String   @id @default(uuid())
+  productId String
+  sessionId String?
+  createdAt DateTime @default(now())
+
+  @@map("product_view_logs")
+  @@index([productId])
+  @@index([createdAt])
 }
 
 
