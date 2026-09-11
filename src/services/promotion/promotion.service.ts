@@ -18,7 +18,7 @@ export class PromotionService {
       banner = await prisma.promotion.create({
         data: {
           title: 'Hero Cover Photo',
-          imageUrl: 'https://i.ibb.co/HTB1fbYf/On-Wear-unique-way-of-elegance-1-jpg-2.jpg',
+          imageUrl: 'https://res.cloudinary.com/lgmh6vly/image/upload/v1789142084/onwear/hero_slides/gzm6j166gp64fcxcv0se.webp',
           isActive: true
         }
       });
@@ -61,8 +61,8 @@ export class PromotionService {
     const cached = await cache.get<any[]>(SLIDES_CACHE_KEY);
     if (cached) return cached;
 
-    let slides = await (prisma as any).promotion.findMany({
-      where: { title: { startsWith: 'Hero Slide' } },
+    let slides = await prisma.promotion.findMany({
+      where: { title: { not: 'Hero Cover Photo' } },
       orderBy: [
         { displayOrder: 'asc' },
         { createdAt: 'asc' }
@@ -73,7 +73,7 @@ export class PromotionService {
       const defaults = [
         {
           title: 'Hero Slide 1',
-          imageUrl: 'https://i.ibb.co/HTB1fbYf/On-Wear-unique-way-of-elegance-1-jpg-2.jpg',
+          imageUrl: 'https://res.cloudinary.com/lgmh6vly/image/upload/v1789142084/onwear/hero_slides/gzm6j166gp64fcxcv0se.webp',
           linkUrl: '/products?category=shirt',
           positionX: 50,
           positionY: 50,
@@ -82,7 +82,7 @@ export class PromotionService {
         },
         {
           title: 'Hero Slide 2',
-          imageUrl: 'https://i.ibb.co/FqHjfvxG/Gemini-Generated-Image-ino58qino58qino5.jpg',
+          imageUrl: 'https://res.cloudinary.com/lgmh6vly/image/upload/v1789142108/onwear/hero_slides/k1wzl2izqkjqlkuur1y3.webp',
           linkUrl: '/products?category=denim',
           positionX: 50,
           positionY: 50,
@@ -100,12 +100,12 @@ export class PromotionService {
         }
       ];
 
-      await (prisma as any).promotion.createMany({
+      await prisma.promotion.createMany({
         data: defaults
       });
 
-      slides = await (prisma as any).promotion.findMany({
-        where: { title: { startsWith: 'Hero Slide' } },
+      slides = await prisma.promotion.findMany({
+        where: { title: { not: 'Hero Cover Photo' } },
         orderBy: { displayOrder: 'asc' }
       });
     }
@@ -119,13 +119,13 @@ export class PromotionService {
       throw new Error('At least 1 slide is required');
     }
 
-    // Delete existing slides and recreate in given order to support dynamic slide count (1 to N)
-    await (prisma as any).promotion.deleteMany({
-      where: { title: { startsWith: 'Hero Slide' } }
+    // Delete all existing hero slides (except legacy single banner)
+    await prisma.promotion.deleteMany({
+      where: { title: { not: 'Hero Cover Photo' } }
     });
 
     const newSlidesData = slides.map((slide, idx) => ({
-      title: slide.title || `Hero Slide ${idx + 1}`,
+      title: slide.title?.trim() || `Hero Slide ${idx + 1}`,
       imageUrl: slide.imageUrl,
       linkUrl: slide.linkUrl || null,
       positionX: typeof slide.positionX === 'number' ? slide.positionX : 50,
@@ -134,16 +134,44 @@ export class PromotionService {
       isActive: true,
     }));
 
-    await (prisma as any).promotion.createMany({
+    await prisma.promotion.createMany({
       data: newSlidesData
     });
 
-    const updated = await (prisma as any).promotion.findMany({
-      where: { title: { startsWith: 'Hero Slide' } },
+    // Also sync the primary Hero Cover Photo with slide 1 for backward compatibility
+    if (newSlidesData.length > 0) {
+      const cover = await prisma.promotion.findFirst({
+        where: { title: 'Hero Cover Photo' }
+      });
+      if (cover) {
+        await prisma.promotion.update({
+          where: { id: cover.id },
+          data: {
+            imageUrl: newSlidesData[0].imageUrl,
+            positionX: newSlidesData[0].positionX,
+            positionY: newSlidesData[0].positionY
+          }
+        });
+      } else {
+        await prisma.promotion.create({
+          data: {
+            title: 'Hero Cover Photo',
+            imageUrl: newSlidesData[0].imageUrl,
+            positionX: newSlidesData[0].positionX,
+            positionY: newSlidesData[0].positionY,
+            isActive: true
+          }
+        });
+      }
+    }
+
+    const updated = await prisma.promotion.findMany({
+      where: { title: { not: 'Hero Cover Photo' } },
       orderBy: { displayOrder: 'asc' }
     });
 
     await cache.del(SLIDES_CACHE_KEY);
+    await cache.del(BANNER_CACHE_KEY);
     return updated;
   }
 }
