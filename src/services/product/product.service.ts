@@ -280,8 +280,12 @@ export class ProductService {
       if (!parsed.image2 && parsed.images.length > 1) {
         parsed.image2 = parsed.images[1];
       }
-    } else if (parsed.image && (!parsed.images || parsed.images.length === 0)) {
+    } else if (parsed.image) {
       parsed.images = [parsed.image, ...(parsed.image2 ? [parsed.image2] : [])];
+    } else if (parsed.image === null || parsed.image === '') {
+      parsed.image = null;
+      parsed.image2 = parsed.image2 || null;
+      parsed.images = parsed.image2 ? [parsed.image2] : [];
     }
 
     const updatedProduct = await prisma.product.update({

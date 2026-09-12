@@ -35,7 +35,7 @@ export const createProductSchema = z.object({
   discountPrice: z.number().nonnegative('Discount price cannot be negative').optional().nullable(),
   stock: z.number().int().nonnegative('Stock cannot be negative'),
   sku: z.string().min(2, 'SKU must be at least 2 characters'),
-  image: z.string().optional(),
+  image: z.string().optional().nullable(),
   image2: z.string().optional().nullable(),
   images: z.array(z.string()).optional(),
   status: z.nativeEnum(ProductStatus).optional(),
