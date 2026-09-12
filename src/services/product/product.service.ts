@@ -116,14 +116,31 @@ export class ProductService {
     }
 
     // Price range filters
-    if (query.minPrice !== undefined || query.maxPrice !== undefined) {
-      where.price = {};
-      if (query.minPrice !== undefined && query.minPrice !== '') {
-        where.price.gte = parseFloat(query.minPrice as string);
-      }
-      if (query.maxPrice !== undefined && query.maxPrice !== '') {
-        where.price.lte = parseFloat(query.maxPrice as string);
-      }
+    const minP = query.minPrice && query.minPrice !== '' ? parseFloat(query.minPrice as string) : undefined;
+    const maxP = query.maxPrice && query.maxPrice !== '' ? parseFloat(query.maxPrice as string) : undefined;
+
+    if (minP !== undefined || maxP !== undefined) {
+      where.AND = [
+        ...(where.AND || []),
+        {
+          OR: [
+            // When discountPrice is set, filter by discountPrice
+            {
+              AND: [
+                { discountPrice: { not: null } },
+                { discountPrice: { ...(minP !== undefined ? { gte: minP } : {}), ...(maxP !== undefined ? { lte: maxP } : {}) } }
+              ]
+            },
+            // When discountPrice is null, filter by regular price
+            {
+              AND: [
+                { discountPrice: null },
+                { price: { ...(minP !== undefined ? { gte: minP } : {}), ...(maxP !== undefined ? { lte: maxP } : {}) } }
+              ]
+            }
+          ]
+        }
+      ];
     }
 
     // Status filter
