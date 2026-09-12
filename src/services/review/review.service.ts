@@ -110,10 +110,30 @@ export class ReviewService {
       where: { isDeleted: false, rating: { gte: 4 } },
       include: {
         user: { select: { id: true, name: true } },
-        product: { select: { id: true, name: true, sku: true, image: true, price: true } }
+        product: { select: { id: true, name: true, sku: true, image: true, price: true, discountPrice: true } }
       },
       orderBy: { createdAt: 'desc' },
       take: limit
     });
   }
+
+  static async getStats() {
+    const [totalReviews, aggregate, totalOrders] = await Promise.all([
+      prisma.review.count({ where: { isDeleted: false } }),
+      prisma.review.aggregate({
+        where: { isDeleted: false },
+        _avg: { rating: true }
+      }),
+      prisma.order.count({ where: { isDeleted: false } })
+    ]);
+
+    const avg = aggregate._avg.rating ? Number(aggregate._avg.rating.toFixed(1)) : 5.0;
+
+    return {
+      totalReviews,
+      averageRating: avg,
+      totalOrders
+    };
+  }
 }
+

@@ -22,6 +22,19 @@ router.post(
   }
 );
 
+// Public: Get currently active public coupon for homepage vault
+router.get(
+  '/public-active',
+  async (_req: any, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const data = await CouponService.getActivePublic();
+      sendSuccessResponse(res, 200, 'Active coupon retrieved successfully', data);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 // Admin: Get all coupons
 router.get(
   '/',

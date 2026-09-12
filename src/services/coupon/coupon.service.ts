@@ -46,6 +46,27 @@ export class CouponService {
     });
   }
 
+  static async getActivePublic() {
+    return prisma.coupon.findFirst({
+      where: {
+        isActive: true,
+        OR: [
+          { expiryDate: null },
+          { expiryDate: { gte: new Date() } }
+        ]
+      },
+      select: {
+        id: true,
+        code: true,
+        discountType: true,
+        discountValue: true,
+        minPurchase: true,
+        firstOrderOnly: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+  }
+
   static async update(id: string, data: any) {
     const existing = await prisma.coupon.findUnique({ where: { id } });
     if (!existing) {

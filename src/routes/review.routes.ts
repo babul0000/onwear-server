@@ -36,6 +36,19 @@ router.get(
   }
 );
 
+// Public: Get aggregated review & order statistics
+router.get(
+  '/stats',
+  async (_req: any, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const data = await ReviewService.getStats();
+      sendSuccessResponse(res, 200, 'Review stats retrieved successfully', data);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 // Public: Get reviews of a product
 router.get(
   '/product/:productId',
