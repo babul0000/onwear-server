@@ -395,10 +395,13 @@ export class OrderService {
     return order;
   }
 
-  static async getOrders(userId: string, role: string) {
+  static async getOrders(userId: string, role: string, includeDeleted: boolean = false) {
+    // Background purge expired trashed orders older than 10 days
+    OrderService.purgeExpired(10).catch(() => {});
+
     if (role === 'admin') {
       return prisma.order.findMany({
-        where: { isDeleted: false },
+        where: includeDeleted ? {} : { isDeleted: false },
         include: {
           user: { select: { id: true, name: true, email: true } },
           items: true
@@ -462,13 +465,13 @@ export class OrderService {
     return order;
   }
 
-  static async deleteOrder(orderId: string, userId: string, role: string) {
+  static async softDelete(orderId: string, userId: string, role: string) {
     const order = await prisma.order.findFirst({
       where: { id: orderId, isDeleted: false }
     });
 
     if (!order) {
-      throw new AppError('Order not found', 404, 'NOT_FOUND');
+      throw new AppError('Order not found or already in trash', 404, 'NOT_FOUND');
     }
 
     if (role !== 'admin' && order.userId !== userId) {
@@ -479,10 +482,91 @@ export class OrderService {
       throw new AppError('Only cancelled orders can be removed from order history', 400, 'CANNOT_DELETE');
     }
 
-    return prisma.order.update({
+    return (prisma.order as any).update({
       where: { id: orderId },
-      data: { isDeleted: true }
+      data: {
+        isDeleted: true,
+        deletedAt: new Date()
+      }
     });
+  }
+
+  static async hardDelete(orderId: string) {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId }
+    });
+
+    if (!order) {
+      throw new AppError('Order not found', 404, 'NOT_FOUND');
+    }
+
+    // Clean up dependent foreign keys safely
+    await prisma.transaction.deleteMany({ where: { orderId } }).catch(() => {});
+    await prisma.codReconciliation.deleteMany({ where: { orderId } }).catch(() => {});
+    await prisma.orderItem.deleteMany({ where: { orderId } }).catch(() => {});
+
+    return prisma.order.delete({
+      where: { id: orderId }
+    });
+  }
+
+  static async restore(orderId: string) {
+    const order = await prisma.order.findFirst({
+      where: { id: orderId, isDeleted: true }
+    });
+
+    if (!order) {
+      throw new AppError('Deleted order not found in trash', 404, 'NOT_FOUND');
+    }
+
+    return (prisma.order as any).update({
+      where: { id: orderId },
+      data: {
+        isDeleted: false,
+        deletedAt: null
+      }
+    });
+  }
+
+  static async purgeExpired(days: number = 10) {
+    try {
+      const threshold = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+      const expired = await (prisma.order as any).findMany({
+        where: {
+          isDeleted: true,
+          OR: [
+            { deletedAt: { lte: threshold } },
+            { deletedAt: null, updatedAt: { lte: threshold } }
+          ]
+        },
+        select: { id: true }
+      });
+
+      for (const o of expired) {
+        await OrderService.hardDelete(o.id).catch(() => {});
+      }
+      return expired.length;
+    } catch {
+      return 0;
+    }
+  }
+
+  static async purgeAllDeleted() {
+    const deletedOrders = await prisma.order.findMany({
+      where: { isDeleted: true },
+      select: { id: true }
+    });
+
+    let count = 0;
+    for (const o of deletedOrders) {
+      await OrderService.hardDelete(o.id).catch(() => {});
+      count++;
+    }
+    return count;
+  }
+
+  static async deleteOrder(orderId: string, userId: string, role: string) {
+    return OrderService.softDelete(orderId, userId, role);
   }
 }
 

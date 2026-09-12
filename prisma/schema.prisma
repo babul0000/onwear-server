@@ -263,6 +263,7 @@ model Order {
   status          OrderStatus   @default(PENDING)
   paymentStatus   PaymentStatus @default(UNPAID)
   isDeleted       Boolean       @default(false)
+  deletedAt       DateTime?
   orderType      OrderType     @default(RETAIL)
   pricingTier    PricingTier?
   couponCode     String?

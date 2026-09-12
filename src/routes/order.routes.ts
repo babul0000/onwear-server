@@ -5,6 +5,7 @@ import { optionalAuthMiddleware, authMiddleware, AuthenticatedRequest } from '..
 import { roleMiddleware } from '../middlewares/role.middleware';
 import { Role } from '@prisma/client';
 import { checkoutSchema, guestTrackSchema } from '../utils/validation';
+import { AppError } from '../middlewares/error.middleware';
 
 const router = Router();
 
@@ -64,8 +65,23 @@ router.get(
     try {
       const userId = req.user!.userId;
       const role = req.user!.role;
-      const data = await OrderService.getOrders(userId, role);
+      const includeDeleted = req.query.includeDeleted === 'true';
+      const data = await OrderService.getOrders(userId, role, includeDeleted);
       sendSuccessResponse(res, 200, 'Orders retrieved successfully', data);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// Admin: Purge all deleted orders immediately from trash (Hard delete)
+router.post(
+  '/purge-deleted',
+  roleMiddleware(Role.admin) as any,
+  async (_req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const count = await OrderService.purgeAllDeleted();
+      sendSuccessResponse(res, 200, `${count} trashed order(s) permanently removed from database`, { count });
     } catch (err) {
       next(err);
     }
@@ -103,6 +119,20 @@ router.post(
   }
 );
 
+// Admin: Restore soft-deleted order from trash
+router.post(
+  '/:id/restore',
+  roleMiddleware(Role.admin) as any,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const data = await OrderService.restore(req.params.id);
+      sendSuccessResponse(res, 200, 'Order restored successfully from trash', data);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 // Admin: Update order status
 router.patch(
   '/:id/status',
@@ -118,15 +148,25 @@ router.patch(
   }
 );
 
-// Customer / Admin: Delete order from history (Customers can only delete CANCELLED orders)
+// Customer / Admin: Delete order (Soft delete to trash with 10-day retention or Admin permanent hard delete)
 router.delete(
   '/:id',
   async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = req.user!.userId;
       const role = req.user!.role;
-      const data = await OrderService.deleteOrder(req.params.id, userId, role);
-      sendSuccessResponse(res, 200, 'Order removed from history successfully', data);
+      const isPermanent = req.query.permanent === 'true';
+
+      if (isPermanent) {
+        if (role !== Role.admin) {
+          throw new AppError('Forbidden: Only admin can permanently delete orders', 403, 'FORBIDDEN');
+        }
+        await OrderService.hardDelete(req.params.id);
+        sendSuccessResponse(res, 200, 'Order permanently deleted from database', null);
+      } else {
+        const data = await OrderService.softDelete(req.params.id, userId, role);
+        sendSuccessResponse(res, 200, 'Order moved to trash (auto-deletes in 10 days)', data);
+      }
     } catch (err) {
       next(err);
     }
