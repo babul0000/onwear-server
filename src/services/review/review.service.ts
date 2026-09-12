@@ -99,9 +99,21 @@ export class ReviewService {
       where: includeDeleted ? undefined : { isDeleted: false },
       include: {
         user: { select: { id: true, name: true, email: true } },
-        product: { select: { id: true, name: true, sku: true } }
+        product: { select: { id: true, name: true, sku: true, image: true } }
       },
       orderBy: { createdAt: 'desc' }
+    });
+  }
+
+  static async getFeatured(limit: number = 8) {
+    return prisma.review.findMany({
+      where: { isDeleted: false, rating: { gte: 4 } },
+      include: {
+        user: { select: { id: true, name: true } },
+        product: { select: { id: true, name: true, sku: true, image: true, price: true } }
+      },
+      orderBy: { createdAt: 'desc' },
+      take: limit
     });
   }
 }

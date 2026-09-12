@@ -23,6 +23,19 @@ router.get(
   }
 );
 
+// Public: Get featured top reviews for homepage social proof hub
+router.get(
+  '/featured',
+  async (_req: any, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const data = await ReviewService.getFeatured();
+      sendSuccessResponse(res, 200, 'Featured reviews retrieved successfully', data);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 // Public: Get reviews of a product
 router.get(
   '/product/:productId',
