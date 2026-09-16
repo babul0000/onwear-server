@@ -20,7 +20,21 @@ export class EmailService {
     const user = process.env.SMTP_USER;
     const pass = process.env.SMTP_PASS;
 
-    if (!host || !user || !pass) {
+    if (!user || !pass) {
+      return null;
+    }
+
+    if (host === 'smtp.gmail.com' || (user && user.includes('@gmail.com'))) {
+      return nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user,
+          pass,
+        },
+      });
+    }
+
+    if (!host) {
       return null;
     }
 
