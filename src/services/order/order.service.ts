@@ -6,6 +6,7 @@ import { EmailService } from '../email/email.service';
 import { SmsService } from '../sms/sms.service';
 import { SettingService } from '../setting/setting.service';
 import { CouponService } from '../coupon/coupon.service';
+import { generateToken } from '../../utils/jwt';
 
 export interface CheckoutInput {
   authUserId?: string;
@@ -320,10 +321,32 @@ export class OrderService {
       customerName: cleanName
     }).catch((err) => console.error('[OrderService] Async order confirmation SMS error:', err));
 
+    // Generate seamless authentication token for guest customer
+    let generatedToken: string | null = null;
+    let authUserPayload: any = null;
+
+    if (targetUserId) {
+      generatedToken = generateToken({
+        userId: targetUserId,
+        email: normalizedEmail,
+        role: Role.customer
+      });
+      authUserPayload = {
+        id: targetUserId,
+        name: cleanName,
+        email: normalizedEmail,
+        phone: cleanPhone,
+        address: shippingAddress,
+        role: 'customer'
+      };
+    }
+
     return {
       ...orderResult,
       autoAccountCreated,
-      customerEmail: normalizedEmail
+      customerEmail: normalizedEmail,
+      token: generatedToken,
+      user: authUserPayload
     };
   }
 
