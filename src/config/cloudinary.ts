@@ -25,17 +25,27 @@ export const uploadBufferToCloudinary = (
   folder = 'onwear/uploads'
 ): Promise<CloudinaryUploadResult> => {
   return new Promise((resolve, reject) => {
+    const isHeroSlide = folder.includes('hero_slides');
+
+    // For hero banners: preserve full 4K ultra-sharp quality without lossy degradation
+    // For standard uploads: use clean auto optimization without lossy flag
+    const transformation = isHeroSlide
+      ? [
+          { width: 3840, crop: 'limit' },
+          { quality: 'auto:best' },
+          { fetch_format: 'auto' }
+        ]
+      : [
+          { width: 2560, crop: 'limit' },
+          { quality: 'auto:good' },
+          { fetch_format: 'auto' }
+        ];
+
     const uploadStream = cloudinary.uploader.upload_stream(
       {
         folder,
         resource_type: 'image',
-        format: 'webp',
-        transformation: [
-          { width: 2560, crop: 'limit' },
-          { quality: 'auto:good' },
-          { fetch_format: 'auto' },
-          { flags: 'lossy' }
-        ]
+        transformation
       },
       (error, result) => {
         if (error || !result) {
