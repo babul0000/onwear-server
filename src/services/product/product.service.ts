@@ -302,14 +302,58 @@ export class ProductService {
         return 5;
       };
 
-      filteredProducts.sort((a, b) => {
-        const rankA = getCategoryRank(a);
-        const rankB = getCategoryRank(b);
-        if (rankA !== rankB) return rankA - rankB;
-        const timeA = new Date(a.createdAt).getTime();
-        const timeB = new Date(b.createdAt).getTime();
-        return sortOrder === 'asc' ? timeA - timeB : timeB - timeA;
+      // Mix and balance products: 2 Shirts, 1 Pant, 1 Cap per 4-item grid cycle
+      const shirts: any[] = [];
+      const pants: any[] = [];
+      const caps: any[] = [];
+      const others: any[] = [];
+
+      filteredProducts.forEach((p) => {
+        const rank = getCategoryRank(p);
+        if (rank === 1 || rank === 2) shirts.push(p);
+        else if (rank === 3) pants.push(p);
+        else if (rank === 4) caps.push(p);
+        else others.push(p);
       });
+
+      const interleaved: any[] = [];
+      let sIdx = 0;
+      let pIdx = 0;
+      let cIdx = 0;
+      let oIdx = 0;
+
+      while (sIdx < shirts.length || pIdx < pants.length || cIdx < caps.length || oIdx < others.length) {
+        let added = 0;
+
+        // Up to 2 shirts
+        for (let i = 0; i < 2; i++) {
+          if (sIdx < shirts.length) {
+            interleaved.push(shirts[sIdx++]);
+            added++;
+          }
+        }
+
+        // 1 pant
+        if (pIdx < pants.length) {
+          interleaved.push(pants[pIdx++]);
+          added++;
+        }
+
+        // 1 cap
+        if (cIdx < caps.length) {
+          interleaved.push(caps[cIdx++]);
+          added++;
+        }
+
+        if (added === 0) {
+          if (sIdx < shirts.length) interleaved.push(shirts[sIdx++]);
+          else if (pIdx < pants.length) interleaved.push(pants[pIdx++]);
+          else if (cIdx < caps.length) interleaved.push(caps[cIdx++]);
+          else if (oIdx < others.length) interleaved.push(others[oIdx++]);
+        }
+      }
+
+      filteredProducts = interleaved;
     }
 
     const total = filteredProducts.length;
