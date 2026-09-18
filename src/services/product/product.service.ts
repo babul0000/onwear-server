@@ -160,7 +160,16 @@ export class ProductService {
       orderBy,
       include: {
         category: {
-          select: { id: true, name: true, slug: true }
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            parentId: true,
+            displayOrder: true,
+            parent: {
+              select: { id: true, name: true, slug: true, displayOrder: true }
+            }
+          }
         },
         reviews: {
           select: { rating: true }
@@ -225,6 +234,81 @@ export class ProductService {
         const { colors } = parseMetadata(p.description);
         const nameMatches = selectedColors.some(c => p.name.toLowerCase().includes(c));
         return nameMatches || selectedColors.some(c => colors.includes(c));
+      });
+    }
+
+    // Prioritize category order on All Products (Shirts -> T-Shirts -> Pants -> Caps -> Others)
+    // when using default sort (new arrivals / createdAt) and no specific category filter is chosen
+    if (!query.category && (!query.sortBy || query.sortBy === 'createdAt')) {
+      const getCategoryRank = (p: any): number => {
+        const catSlug = (p.category?.slug || '').toLowerCase();
+        const catName = (p.category?.name || '').toLowerCase();
+        const parentSlug = (p.category?.parent?.slug || '').toLowerCase();
+        const parentName = (p.category?.parent?.name || '').toLowerCase();
+        const prodName = (p.name || '').toLowerCase();
+
+        // 1. Cap
+        if (
+          catSlug === 'cap' || 
+          catSlug === 'caps' || 
+          parentSlug === 'cap' ||
+          parentName === 'cap' ||
+          catName.includes('cap') ||
+          /\b(cap|caps|hat|snapback)\b/i.test(prodName)
+        ) {
+          return 4;
+        }
+
+        // 2. T-Shirt
+        if (
+          catSlug === 't-shirt' ||
+          catSlug === 'tshirt' ||
+          parentSlug === 't-shirt' ||
+          parentSlug === 'tshirt' ||
+          /\b(t-shirt|tshirt|tee|polos?)\b/i.test(catSlug) ||
+          /\b(t-shirt|tshirt|tee|polos?)\b/i.test(catName) ||
+          /\b(t-shirt|tshirt|tee|polos?)\b/i.test(prodName)
+        ) {
+          return 2;
+        }
+
+        // 3. Shirt (Highest priority)
+        if (
+          catSlug === 'shirts' ||
+          catSlug === 'shirt' ||
+          parentSlug === 'shirts' ||
+          parentSlug === 'shirt' ||
+          catSlug.includes('shirt') ||
+          catName.includes('shirt') ||
+          /\b(shirts?|kurta|katua|boxy fit)\b/i.test(prodName) ||
+          /\b(shirts?|kurta|katua|boxy fit)\b/i.test(catName)
+        ) {
+          return 1;
+        }
+
+        // 4. Pants
+        if (
+          catSlug === 'pants' ||
+          catSlug === 'pant' ||
+          parentSlug === 'pants' ||
+          parentSlug === 'pant' ||
+          /\b(pants?|jeans|joggers?|chino|cargo|trousers?)\b/i.test(catSlug) ||
+          /\b(pants?|jeans|joggers?|chino|cargo|trousers?)\b/i.test(catName) ||
+          /\b(pants?|jeans|joggers?|chino|cargo|trousers?)\b/i.test(prodName)
+        ) {
+          return 3;
+        }
+
+        return 5;
+      };
+
+      filteredProducts.sort((a, b) => {
+        const rankA = getCategoryRank(a);
+        const rankB = getCategoryRank(b);
+        if (rankA !== rankB) return rankA - rankB;
+        const timeA = new Date(a.createdAt).getTime();
+        const timeB = new Date(b.createdAt).getTime();
+        return sortOrder === 'asc' ? timeA - timeB : timeB - timeA;
       });
     }
 
