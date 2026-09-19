@@ -75,6 +75,7 @@ enum CreatedFrom {
   DIRECT_REGISTRATION
   GUEST_CHECKOUT
   ADMIN_CREATED
+  GOOGLE
 }
 
 model User {
@@ -84,6 +85,8 @@ model User {
   password        String?
   phone           String?
   address         String?
+  avatar          String?
+  googleId        String?          @unique
   role            Role             @default(customer)
   accountStatus   AccountStatus    @default(ACTIVE)
   createdFrom     CreatedFrom      @default(DIRECT_REGISTRATION)
@@ -101,6 +104,7 @@ model User {
 
   @@map("users")
   @@index([email])
+  @@index([googleId])
 }
 
 model ActivationToken {

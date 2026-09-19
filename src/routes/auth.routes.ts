@@ -43,6 +43,18 @@ router.post(
   }
 );
 
+router.post(
+  '/google',
+  async (req: any, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const data = await AuthService.googleAuth(req.body);
+      sendSuccessResponse(res, 200, 'Google authentication successful', data);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 // Verify activation token validity
 router.post(
   '/verify-activation-token',
