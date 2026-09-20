@@ -48,9 +48,15 @@ export class ProductService {
     return product;
   }
 
-  static async getById(id: string) {
+  static async getById(idOrSlug: string) {
     const product = await prisma.product.findFirst({
-      where: { id, isDeleted: false },
+      where: {
+        OR: [
+          { id: idOrSlug },
+          { slug: idOrSlug }
+        ],
+        isDeleted: false
+      },
       include: {
         category: {
           select: { id: true, name: true, slug: true }
