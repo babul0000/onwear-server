@@ -106,9 +106,40 @@ export class OrderService {
       throw new AppError('Cannot place an order with an empty cart', 400, 'BAD_REQUEST');
     }
 
-    // 3. Securely determine shipping cost from Store Settings
+    // 3. Securely determine shipping cost from Store Settings with robust Outside Dhaka detection
     const storeSettings = await SettingService.getSettings();
-    const isOutside = zone === 'outside' || shippingAddress.toLowerCase().includes('outside dhaka');
+    const addrLower = shippingAddress.toLowerCase();
+    
+    // Comprehensive Outside Dhaka districts and suburban courier keywords
+    const outsideDhakaKeywords = [
+      'outside dhaka', 'ঢাকার বাইরে',
+      // Non-Dhaka Divisions & Key Districts
+      'chittagong', 'chattogram', 'চট্টগ্রাম', 'coxs bazar', "cox's bazar", 'coxsbazar', 'কক্সবাজার',
+      'cumilla', 'comilla', 'কুমিল্লা', 'feni', 'ফেনী', 'brahmanbaria', 'ব্রাহ্মণবাড়িয়া',
+      'noakhali', 'নোয়াখালী', 'chandpur', 'চাঁদপুর', 'lakshmipur', 'লক্ষ্মীপুর',
+      'rangamati', 'রাঙ্গামাটি', 'khagrachhari', 'খাগড়াছড়ি', 'bandarban', 'বান্দরবান',
+      'sylhet', 'সিলেট', 'moulvibazar', 'মৌলভীবাজার', 'habiganj', 'হবিগঞ্জ', 'sunamganj', 'সুনামগঞ্জ',
+      'rajshahi', 'রাজশাহী', 'bogura', 'bogra', 'বগুড়া', 'pabna', 'পাবনা', 'sirajganj', 'সিরাজগঞ্জ',
+      'naogaon', 'নওগাঁ', 'natore', 'নাটোর', 'chapainawabganj', 'চাঁপাইনবাবগঞ্জ', 'joypurhat', 'জয়পুরহাট',
+      'khulna', 'খুলনা', 'jashore', 'jessore', 'যশোর', 'kushtia', 'কুষ্টিয়া', 'satkhira', 'সাতক্ষীরা',
+      'bagerhat', 'বাগেরহাট', 'jhenaidah', 'ঝিনাইদহ', 'chuadanga', 'চুয়াডাঙ্গা', 'magura', 'মাগুরা',
+      'meherpur', 'মেহেরপুর', 'narail', 'নড়াইল',
+      'barishal', 'barisal', 'বরিশাল', 'patuakhali', 'পটুয়াখালী', 'bhola', 'ভোলা',
+      'pirojpur', 'পিরোজপুর', 'barguna', 'বরগুনা', 'jhalokati', 'ঝালকাঠি',
+      'rangpur', 'রংপুর', 'dinajpur', 'দিনাজপুর', 'gaibandha', 'গাইবান্ধা', 'kurigram', 'কুড়িগ্রাম',
+      'nilphamari', 'নীলফামারী', 'panchagarh', 'পঞ্চগড়', 'lalmonirhat', 'লালমনিরহাট', 'thakurgaon', 'ঠাকুরগাঁও',
+      'mymensingh', 'ময়মনসিংহ', 'jamalpur', 'জামালপুর', 'netrokona', 'নেত্রকোণা', 'sherpur', 'শেরপুর',
+      'gazipur', 'গাজীপুর', 'narayanganj', 'নারায়ণগঞ্জ', 'tangail', 'টাঙ্গাইল',
+      'faridpur', 'ফরিদপুর', 'manikganj', 'মানিকগঞ্জ', 'munshiganj', 'মুন্সীগঞ্জ',
+      'narsingdi', 'নরসিংদী', 'gopalganj', 'গোপালগঞ্জ', 'madaripur', 'মাদারীপুর',
+      'rajbari', 'রাজবাড়ী', 'shariatpur', 'শরীয়তপুর', 'kishoreganj', 'কিশোরগঞ্জ',
+      // Dhaka Sub-urban Courier Out-of-city zones
+      'savar', 'সাভার', 'ashulia', 'আশুলিয়া', 'keraniganj', 'কেরানীগঞ্জ',
+      'dhamrai', 'ধামরাই', 'dohar', 'দোহার', 'nawabganj', 'নবাবগঞ্জ'
+    ];
+
+    const hasOutsideKeyword = outsideDhakaKeywords.some(kw => addrLower.includes(kw));
+    const isOutside = zone === 'outside' || hasOutsideKeyword;
     const calculatedShippingCost = isOutside
       ? storeSettings.shippingOutsideDhaka
       : storeSettings.shippingInsideDhaka;
