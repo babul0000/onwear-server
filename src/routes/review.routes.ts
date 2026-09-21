@@ -28,6 +28,9 @@ router.get(
   '/featured',
   async (_req: any, res: Response, next: NextFunction): Promise<void> => {
     try {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       const data = await ReviewService.getFeatured();
       sendSuccessResponse(res, 200, 'Featured reviews retrieved successfully', data);
     } catch (err) {
@@ -41,6 +44,9 @@ router.get(
   '/stats',
   async (_req: any, res: Response, next: NextFunction): Promise<void> => {
     try {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       const data = await ReviewService.getStats();
       sendSuccessResponse(res, 200, 'Review stats retrieved successfully', data);
     } catch (err) {
@@ -105,7 +111,22 @@ router.patch(
   }
 );
 
-// Customer/Admin: Delete review (Soft delete)
+// Admin: Cleanup all soft-deleted reviews
+router.delete(
+  '/cleanup/deleted',
+  authMiddleware as any,
+  roleMiddleware(Role.admin) as any,
+  async (_req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const data = await ReviewService.cleanupDeleted();
+      sendSuccessResponse(res, 200, 'Deleted reviews cleaned up successfully', data);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// Customer/Admin: Delete review (Hard delete row to free unique constraint)
 router.delete(
   '/:id',
   authMiddleware as any,

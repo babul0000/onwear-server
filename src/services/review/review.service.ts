@@ -14,11 +14,25 @@ export class ReviewService {
       throw new AppError('Product not found or deleted', 404, 'NOT_FOUND');
     }
 
-    // Check duplicate review
+    // Check duplicate review (even if soft-deleted)
     const existing = await prisma.review.findFirst({
-      where: { userId, productId: parsed.productId, isDeleted: false }
+      where: { userId, productId: parsed.productId }
     });
+
     if (existing) {
+      if (existing.isDeleted) {
+        // If it was previously deleted, reactivate and update with new rating and comment!
+        return prisma.review.update({
+          where: { id: existing.id },
+          data: {
+            rating: parsed.rating,
+            comment: parsed.comment,
+            isDeleted: false,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          }
+        });
+      }
       throw new AppError('You have already reviewed this product', 409, 'DUPLICATE_RECORD');
     }
 
@@ -78,7 +92,7 @@ export class ReviewService {
 
   static async delete(id: string, userId: string, role: string) {
     const review = await prisma.review.findFirst({
-      where: { id, isDeleted: false }
+      where: { id }
     });
     if (!review) {
       throw new AppError('Review not found', 404, 'NOT_FOUND');
@@ -88,9 +102,8 @@ export class ReviewService {
       throw new AppError('Forbidden: You can only delete your own reviews', 403, 'FORBIDDEN');
     }
 
-    return prisma.review.update({
-      where: { id },
-      data: { isDeleted: true }
+    return prisma.review.delete({
+      where: { id }
     });
   }
 
@@ -134,6 +147,12 @@ export class ReviewService {
       averageRating: avg,
       totalOrders
     };
+  }
+
+  static async cleanupDeleted() {
+    return prisma.review.deleteMany({
+      where: { isDeleted: true }
+    });
   }
 }
 
