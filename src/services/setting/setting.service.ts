@@ -44,7 +44,12 @@ export class SettingService {
           loginSubtitle: 'Find your signature clothing comfort at ONWEAR',
           registerImageUrl: 'https://i.ibb.co/FqHjfvxG/Gemini-Generated-Image-ino58qino58qino5.jpg',
           registerTitle: 'START JOURNEY',
-          registerSubtitle: 'Join ONWEAR to unlock VIP privileges, track orders & save wishlists'
+          registerSubtitle: 'Join ONWEAR to unlock VIP privileges, track orders & save wishlists',
+          advanceCourierEnabled: true,
+          advanceCourierScope: 'OUTSIDE_DHAKA_ONLY',
+          advanceCourierAmountType: 'EXACT_SHIPPING',
+          advanceCourierFixedAmount: 150,
+          advanceCourierNote: 'ঢাকার বাইরে ক্যাশ অন ডেলিভারি অর্ডারে ফেক অর্ডার রোধে ডেলিভারি চার্জ অগ্রিম প্রযোজ্য। বাকি টাকা পণ্য হাতে পেয়ে পরিশোধ করবেন।'
         }
       });
     }
@@ -82,6 +87,11 @@ export class SettingService {
     registerImageUrl?: string | null;
     registerTitle?: string | null;
     registerSubtitle?: string | null;
+    advanceCourierEnabled?: boolean;
+    advanceCourierScope?: string;
+    advanceCourierAmountType?: string;
+    advanceCourierFixedAmount?: number;
+    advanceCourierNote?: string | null;
   }) {
     // Ensure default settings exist first
     await this.getSettings();
@@ -116,6 +126,11 @@ export class SettingService {
     if (data.registerImageUrl !== undefined) updateData.registerImageUrl = data.registerImageUrl;
     if (data.registerTitle !== undefined) updateData.registerTitle = data.registerTitle;
     if (data.registerSubtitle !== undefined) updateData.registerSubtitle = data.registerSubtitle;
+    if (data.advanceCourierEnabled !== undefined) updateData.advanceCourierEnabled = !!data.advanceCourierEnabled;
+    if (data.advanceCourierScope !== undefined) updateData.advanceCourierScope = data.advanceCourierScope;
+    if (data.advanceCourierAmountType !== undefined) updateData.advanceCourierAmountType = data.advanceCourierAmountType;
+    if (data.advanceCourierFixedAmount !== undefined) updateData.advanceCourierFixedAmount = Number(data.advanceCourierFixedAmount);
+    if (data.advanceCourierNote !== undefined) updateData.advanceCourierNote = data.advanceCourierNote;
 
     const updated = await prisma.storeSetting.update({
       where: { id: 'default' },

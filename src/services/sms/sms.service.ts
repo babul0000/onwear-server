@@ -5,12 +5,22 @@ interface SendOrderSmsParams {
   orderId: string;
   totalAmount: number;
   customerName?: string;
+  advanceAmount?: number;
+  dueAmount?: number;
 }
 
 interface SendActivationSmsParams {
   phone: string;
   name?: string;
   activationToken: string;
+}
+
+interface SendAdvanceVerifiedParams {
+  phone: string;
+  orderId: string;
+  advanceAmount: number;
+  dueAmount: number;
+  customerName?: string;
 }
 
 export class SmsService {
@@ -36,14 +46,20 @@ export class SmsService {
     phone,
     orderId,
     totalAmount,
-    customerName
+    customerName,
+    advanceAmount,
+    dueAmount
   }: SendOrderSmsParams): Promise<boolean> {
     const isProduction = process.env.NODE_ENV === 'production';
     const storeName = process.env.STORE_NAME || 'ONWEAR';
     const shortOrderId = orderId.substring(0, 8).toUpperCase();
     const cleanPhone = this.normalizePhone(phone);
 
-    const message = `Dear ${customerName || 'Customer'}, thank you for your order #${shortOrderId} at ${storeName}. Total Amount: ৳${totalAmount}. We are processing your delivery. Helpline: 01603-742663`;
+    let message = `Dear ${customerName || 'Customer'}, thank you for your order #${shortOrderId} at ${storeName}. Total: ৳${totalAmount}.`;
+    if (advanceAmount && advanceAmount > 0) {
+      message += ` Advance Courier: ৳${advanceAmount}. Due on Delivery (COD): ৳${dueAmount !== undefined ? dueAmount : (totalAmount - advanceAmount)}.`;
+    }
+    message += ` Helpline: 01603-742663`;
 
     if (!isProduction) {
       console.log('\n' + '='.repeat(60));
@@ -109,6 +125,55 @@ export class SmsService {
       console.log(`To: ${phone} (${cleanPhone})`);
       console.log(`Message: ${message}`);
       console.log('='.repeat(60) + '\n');
+    }
+
+    return true;
+  }
+
+  /**
+   * Dispatch Advance Courier Payment Verified SMS
+   */
+  static async sendAdvanceVerifiedSms({
+    phone,
+    orderId,
+    advanceAmount,
+    dueAmount,
+    customerName
+  }: SendAdvanceVerifiedParams): Promise<boolean> {
+    const isProduction = process.env.NODE_ENV === 'production';
+    const storeName = process.env.STORE_NAME || 'ONWEAR';
+    const shortOrderId = orderId.substring(0, 8).toUpperCase();
+    const cleanPhone = this.normalizePhone(phone);
+
+    const message = `Dear ${customerName || 'Customer'}, your advance courier payment of ৳${advanceAmount} for order #${shortOrderId} at ${storeName} is verified! Your order is CONFIRMED. Due on Delivery (COD): ৳${dueAmount}. Helpline: 01603-742663`;
+
+    if (!isProduction) {
+      console.log('\n' + '='.repeat(60));
+      console.log(`📱 [DEV SMS DISPATCH] Advance Payment Verified SMS`);
+      console.log(`To: ${phone} (${cleanPhone})`);
+      console.log(`Message: ${message}`);
+      console.log('='.repeat(60) + '\n');
+    }
+
+    const smsApiKey = process.env.SMS_API_KEY;
+    const smsApiUrl = process.env.SMS_API_URL;
+    const smsSenderId = process.env.SMS_SENDER_ID || 'ONWEAR';
+
+    if (isProduction && smsApiKey && smsApiUrl) {
+      try {
+        await fetch(smsApiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            api_key: smsApiKey,
+            senderid: smsSenderId,
+            number: cleanPhone,
+            message: message
+          })
+        });
+      } catch (err: any) {
+        logger.error(`SMS dispatch exception: ${err?.message || err}`);
+      }
     }
 
     return true;

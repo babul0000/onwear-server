@@ -71,9 +71,12 @@ export const checkoutSchema = z.object({
   items: z.array(checkoutItemSchema).optional(),
   note: z.string().optional(),
   couponCode: z.string().optional(),
-  paymentMethod: z.enum(['COD', 'BKASH', 'NAGAD', 'ONLINE']).optional().default('COD'),
+  paymentMethod: z.string().optional().default('COD'),
   paymentPhone: z.string().optional(),
-  trxId: z.string().optional()
+  trxId: z.string().optional(),
+  advanceAmount: z.number().optional(),
+  advancePaymentMethod: z.string().optional(),
+  advanceTrxId: z.string().optional()
 });
 
 export const guestTrackSchema = z.object({

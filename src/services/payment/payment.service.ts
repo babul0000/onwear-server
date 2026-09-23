@@ -9,7 +9,7 @@ export class PaymentService {
   /**
    * Initiates an SSLCommerz payment session for an order.
    */
-  static async initiateSSLCommerzPayment(orderId: string, userId: string) {
+  static async initiateSSLCommerzPayment(orderId: string, userId: string, payAdvanceOnly: boolean = false) {
     const order = await prisma.order.findFirst({
       where: { id: orderId, userId, isDeleted: false },
       include: { user: { select: { id: true, name: true, email: true, phone: true } } }
@@ -19,9 +19,11 @@ export class PaymentService {
       throw new AppError('Order not found', 404, 'NOT_FOUND');
     }
 
-    if (order.paymentStatus === PaymentStatus.PAID) {
-      throw new AppError('This order has already been paid', 400, 'BAD_REQUEST');
+    if (order.paymentStatus === PaymentStatus.PAID || (payAdvanceOnly && order.isAdvanceCourierPaid && order.advancePaymentStatus === PaymentStatus.PAID)) {
+      throw new AppError('This order or advance fee has already been paid', 400, 'BAD_REQUEST');
     }
+
+    const payableAmount = payAdvanceOnly && order.advanceAmount > 0 ? order.advanceAmount : order.totalAmount;
 
     const sslcommerzUrl = env.SSLCOMMERZ_IS_SANDBOX
       ? 'https://sandbox.sslcommerz.com/gwprocess/v4/api.php'
@@ -30,7 +32,7 @@ export class PaymentService {
     const paymentData = {
       store_id: env.SSLCOMMERZ_STORE_ID,
       store_passwd: env.SSLCOMMERZ_STORE_PASSWORD,
-      total_amount: order.totalAmount.toString(),
+      total_amount: payableAmount.toString(),
       currency: 'BDT',
       tran_id: order.id,
       success_url: `${env.BACKEND_URL}/api/payments/sslcommerz/success`,
@@ -115,25 +117,43 @@ export class PaymentService {
       throw new AppError('Order not found', 404, 'NOT_FOUND');
     }
 
-    // Validate the payment amount to prevent tampering
-    if (Math.abs(order.totalAmount - parseFloat(amount)) > 0.01) {
+    // Validate the payment amount to prevent tampering (check either total amount or advance courier amount)
+    const paidAmount = parseFloat(amount);
+    const isAdvancePayment = order.advanceAmount > 0 && Math.abs(order.advanceAmount - paidAmount) <= 0.05;
+    const isFullPayment = Math.abs(order.totalAmount - paidAmount) <= 0.05;
+
+    if (!isAdvancePayment && !isFullPayment) {
       throw new AppError('Payment amount mismatch', 400, 'BAD_REQUEST');
     }
 
-    // Update order status to CONFIRMED and payment to PAID
-    await OrderService.updateStatus(tran_id, OrderStatus.CONFIRMED, PaymentStatus.PAID);
+    if (isAdvancePayment) {
+      // Mark advance courier as paid and confirm order for shipping
+      await prisma.order.update({
+        where: { id: tran_id },
+        data: {
+          isAdvanceCourierPaid: true,
+          advancePaymentStatus: PaymentStatus.PAID,
+          advancePaymentMethod: 'SSLCommerz',
+          status: OrderStatus.CONFIRMED
+        }
+      });
+    } else {
+      // Update order status to CONFIRMED and payment to PAID
+      await OrderService.updateStatus(tran_id, OrderStatus.CONFIRMED, PaymentStatus.PAID);
+    }
 
     // Update transaction to SUCCESS
     await prisma.transaction.upsert({
       where: { trxId: tran_id },
       update: {
+        amount: paidAmount,
         status: 'SUCCESS',
         callbackPayload: JSON.stringify(payload),
       },
       create: {
         orderId: tran_id,
         gateway: 'SSLCommerz',
-        amount: order.totalAmount,
+        amount: paidAmount,
         status: 'SUCCESS',
         trxId: tran_id,
         callbackPayload: JSON.stringify(payload),

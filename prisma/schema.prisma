@@ -266,6 +266,12 @@ model Order {
   cancelReason    String?
   status          OrderStatus   @default(PENDING)
   paymentStatus   PaymentStatus @default(UNPAID)
+  advanceAmount         Float         @default(0)
+  dueAmount             Float         @default(0)
+  isAdvanceCourierPaid  Boolean       @default(false)
+  advancePaymentMethod  String?
+  advanceTrxId          String?
+  advancePaymentStatus  PaymentStatus @default(UNPAID)
   isDeleted       Boolean       @default(false)
   deletedAt       DateTime?
   orderType      OrderType     @default(RETAIL)
@@ -440,6 +446,11 @@ model StoreSetting {
   registerImageUrl      String?  @default("https://i.ibb.co/FqHjfvxG/Gemini-Generated-Image-ino58qino58qino5.jpg")
   registerTitle         String?  @default("START JOURNEY")
   registerSubtitle      String?  @default("Join ONWEAR to unlock VIP privileges, track orders & save wishlists")
+  advanceCourierEnabled     Boolean  @default(true)
+  advanceCourierScope       String   @default("OUTSIDE_DHAKA_ONLY")
+  advanceCourierAmountType  String   @default("EXACT_SHIPPING")
+  advanceCourierFixedAmount Float    @default(150)
+  advanceCourierNote        String?  @default("ঢাকার বাইরে ক্যাশ অন ডেলিভারি অর্ডারে ফেক অর্ডার রোধে ডেলিভারি চার্জ অগ্রিম প্রযোজ্য। বাকি টাকা পণ্য হাতে পেয়ে পরিশোধ করবেন।")
   updatedAt             DateTime @updatedAt
 
   @@map("store_settings")

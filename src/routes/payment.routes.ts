@@ -14,7 +14,8 @@ router.post(
     try {
       const userId = req.user!.userId;
       const orderId = req.params.orderId;
-      const data = await PaymentService.initiateSSLCommerzPayment(orderId, userId);
+      const payAdvanceOnly = req.body?.payAdvanceOnly === true || req.query.payAdvanceOnly === 'true';
+      const data = await PaymentService.initiateSSLCommerzPayment(orderId, userId, payAdvanceOnly);
       sendSuccessResponse(res, 200, 'SSLCommerz payment session initiated', data);
     } catch (err) {
       next(err);

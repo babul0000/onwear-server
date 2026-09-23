@@ -44,7 +44,10 @@ router.post(
         couponCode: parsed.couponCode,
         paymentMethod: parsed.paymentMethod,
         paymentPhone: parsed.paymentPhone,
-        trxId: parsed.trxId
+        trxId: parsed.trxId,
+        advanceAmount: parsed.advanceAmount,
+        advancePaymentMethod: parsed.advancePaymentMethod,
+        advanceTrxId: parsed.advanceTrxId
       });
 
       sendSuccessResponse(res, 201, 'Order placed successfully', data);
@@ -142,6 +145,35 @@ router.patch(
       const { status, paymentStatus } = req.body;
       const data = await OrderService.updateStatus(req.params.id, status, paymentStatus);
       sendSuccessResponse(res, 200, 'Order status updated successfully', data);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// Admin: Verify advance courier payment
+router.patch(
+  '/:id/verify-advance',
+  roleMiddleware(Role.admin) as any,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const data = await OrderService.verifyAdvancePayment(req.params.id);
+      sendSuccessResponse(res, 200, 'Advance courier payment verified and order confirmed', data);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// Admin: Reject advance courier payment
+router.patch(
+  '/:id/reject-advance',
+  roleMiddleware(Role.admin) as any,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { reason } = req.body;
+      const data = await OrderService.rejectAdvancePayment(req.params.id, reason);
+      sendSuccessResponse(res, 200, 'Advance payment marked as rejected', data);
     } catch (err) {
       next(err);
     }

@@ -185,7 +185,9 @@ export class EmailService {
     <p>Your order has been received and is being processed.</p>
     <div class="order-box">
       <p><strong>Order ID:</strong> ${order.id}</p>
-      <p><strong>Total Amount:</strong> ৳${order.totalAmount}</p>
+      <p><strong>Total Order Value:</strong> ৳${order.totalAmount}</p>
+      ${order.advanceAmount && order.advanceAmount > 0 ? `<p><strong>Advance Courier Bill:</strong> ৳${order.advanceAmount} (${order.isAdvanceCourierPaid ? 'Submitted / TrxID Provided' : 'Pending'})</p>` : ''}
+      ${order.dueAmount !== undefined ? `<p><strong>Cash on Delivery Due:</strong> ৳${order.dueAmount}</p>` : ''}
       <p><strong>Status:</strong> ${order.status}</p>
     </div>
     <p>We'll notify you once your package is dispatched.</p>

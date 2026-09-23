@@ -26,6 +26,9 @@ export interface CheckoutInput {
   paymentMethod?: string;
   paymentPhone?: string;
   trxId?: string;
+  advanceAmount?: number;
+  advancePaymentMethod?: string;
+  advanceTrxId?: string;
 }
 
 export class OrderService {
@@ -42,7 +45,10 @@ export class OrderService {
       couponCode,
       paymentMethod = 'COD',
       paymentPhone,
-      trxId
+      trxId,
+      advanceAmount: inputAdvanceAmount,
+      advancePaymentMethod: inputAdvancePaymentMethod,
+      advanceTrxId: inputAdvanceTrxId
     } = input;
 
     if (!shippingAddress || !phone) {
@@ -287,6 +293,48 @@ export class OrderService {
       // Calculate final total securely on the server
       const totalAmount = Math.max(0, itemsTotal - calculatedDiscount + finalShippingCost);
 
+      // Advance Courier Charge logic
+      const advanceCourierEnabled = (storeSettings as any).advanceCourierEnabled !== false;
+      const advanceCourierScope = (storeSettings as any).advanceCourierScope || 'OUTSIDE_DHAKA_ONLY';
+      const isAdvanceRequiredByScope =
+        advanceCourierEnabled &&
+        (advanceCourierScope === 'ALL' || (advanceCourierScope === 'OUTSIDE_DHAKA_ONLY' && isOutside));
+
+      let advanceCourierFee = 0;
+      if (isAdvanceRequiredByScope && finalShippingCost > 0) {
+        if ((storeSettings as any).advanceCourierAmountType === 'FIXED_AMOUNT' && (storeSettings as any).advanceCourierFixedAmount > 0) {
+          advanceCourierFee = Number((storeSettings as any).advanceCourierFixedAmount);
+        } else {
+          advanceCourierFee = finalShippingCost;
+        }
+      }
+
+      let finalAdvanceAmount = 0;
+      let finalAdvanceMethod: string | null = null;
+      let finalAdvanceTrxId: string | null = null;
+      let isAdvancePaid = false;
+
+      const isCodWithAdvance = paymentMethod === 'COD_WITH_ADVANCE' || (isAdvanceRequiredByScope && paymentMethod === 'COD');
+
+      if (isCodWithAdvance || inputAdvanceAmount !== undefined || inputAdvanceTrxId) {
+        finalAdvanceAmount = inputAdvanceAmount !== undefined ? inputAdvanceAmount : advanceCourierFee;
+        finalAdvanceMethod = inputAdvancePaymentMethod || (paymentMethod === 'NAGAD' ? 'NAGAD' : 'BKASH');
+        finalAdvanceTrxId = inputAdvanceTrxId || trxId || null;
+        // Manual advance payments with TrxID start unverified until Admin verifies in portal
+        isAdvancePaid = false;
+      } else if (paymentMethod === 'BKASH' || paymentMethod === 'NAGAD') {
+        // If full prepayment was done directly via bKash/Nagad
+        finalAdvanceAmount = totalAmount;
+        finalAdvanceMethod = paymentMethod;
+        finalAdvanceTrxId = trxId || null;
+        isAdvancePaid = false;
+      } else {
+        // Full regular COD
+        finalAdvanceAmount = 0;
+      }
+
+      const finalDueAmount = Math.max(0, totalAmount - finalAdvanceAmount);
+
       // Create Order linked to user
       const createdOrder = await tx.order.create({
         data: {
@@ -299,11 +347,17 @@ export class OrderService {
           shippingCost: finalShippingCost,
           couponCode: validatedCouponCode,
           discountApplied: calculatedDiscount,
-          paymentMethod: paymentMethod || 'COD',
+          paymentMethod: isCodWithAdvance ? 'COD_WITH_ADVANCE' : (paymentMethod || 'COD'),
           paymentPhone: paymentPhone || null,
-          trxId: trxId || null,
+          trxId: trxId || finalAdvanceTrxId || null,
+          advanceAmount: finalAdvanceAmount,
+          dueAmount: finalDueAmount,
+          isAdvanceCourierPaid: isAdvancePaid,
+          advancePaymentMethod: finalAdvanceMethod,
+          advanceTrxId: finalAdvanceTrxId,
+          advancePaymentStatus: isAdvancePaid ? PaymentStatus.UNPAID : PaymentStatus.UNPAID,
           status: OrderStatus.PENDING,
-          paymentStatus: paymentMethod === 'COD' ? PaymentStatus.UNPAID : PaymentStatus.UNPAID,
+          paymentStatus: paymentMethod === 'COD' || isCodWithAdvance ? PaymentStatus.UNPAID : PaymentStatus.UNPAID,
           items: {
             create: orderItemsData
           }
@@ -349,6 +403,8 @@ export class OrderService {
       phone: cleanPhone,
       orderId: orderResult.id,
       totalAmount: orderResult.totalAmount,
+      advanceAmount: orderResult.advanceAmount,
+      dueAmount: orderResult.dueAmount,
       customerName: cleanName
     }).catch((err) => console.error('[OrderService] Async order confirmation SMS error:', err));
 
@@ -621,6 +677,59 @@ export class OrderService {
 
   static async deleteOrder(orderId: string, userId: string, role: string) {
     return OrderService.softDelete(orderId, userId, role);
+  }
+
+  static async verifyAdvancePayment(orderId: string) {
+    const order = await prisma.order.findFirst({
+      where: { id: orderId, isDeleted: false },
+      include: { user: true }
+    });
+
+    if (!order) {
+      throw new AppError('Order not found', 404, 'NOT_FOUND');
+    }
+
+    const updated = await prisma.order.update({
+      where: { id: orderId },
+      data: {
+        isAdvanceCourierPaid: true,
+        advancePaymentStatus: PaymentStatus.PAID,
+        status: OrderStatus.CONFIRMED
+      },
+      include: { items: true, user: true }
+    });
+
+    if (order.phone) {
+      SmsService.sendAdvanceVerifiedSms({
+        phone: order.phone,
+        orderId: order.id,
+        advanceAmount: order.advanceAmount,
+        dueAmount: order.dueAmount,
+        customerName: order.user?.name || 'Customer'
+      }).catch((err) => console.error('[OrderService] Verify advance SMS error:', err));
+    }
+
+    return updated;
+  }
+
+  static async rejectAdvancePayment(orderId: string, reason?: string) {
+    const order = await prisma.order.findFirst({
+      where: { id: orderId, isDeleted: false }
+    });
+
+    if (!order) {
+      throw new AppError('Order not found', 404, 'NOT_FOUND');
+    }
+
+    return prisma.order.update({
+      where: { id: orderId },
+      data: {
+        isAdvanceCourierPaid: false,
+        advancePaymentStatus: PaymentStatus.FAILED,
+        cancelReason: reason || 'Advance courier payment verification failed'
+      },
+      include: { items: true, user: true }
+    });
   }
 }
 
