@@ -3,7 +3,7 @@ import { OAuth2Client } from 'google-auth-library';
 import { env } from '../../config/env';
 import { prisma } from '../../lib/prisma';
 import { hashPassword, comparePassword } from '../../utils/password';
-import { generateToken } from '../../utils/jwt';
+import { generateToken, generateRefreshToken, verifyRefreshToken, JwtPayload } from '../../utils/jwt';
 import { AppError } from '../../middlewares/error.middleware';
 import { registerSchema, loginSchema } from '../../utils/validation';
 import { AccountStatus, CreatedFrom } from '@prisma/client';
@@ -93,8 +93,14 @@ export class AuthService {
       role: user.role
     });
 
+    const refreshToken = generateRefreshToken({
+      userId: user.id,
+      email: user.email,
+      role: user.role
+    });
+
     const { password: _password, ...safeUser } = user;
-    return { user: safeUser, token };
+    return { user: safeUser, token, refreshToken };
   }
 
   static async getMe(userId: string) {
@@ -196,15 +202,21 @@ export class AuthService {
       return user;
     });
 
-    // Auto-login: generate JWT token
+    // Auto-login: generate JWT token & refresh token
     const token = generateToken({
       userId: updatedUser.id,
       email: updatedUser.email,
       role: updatedUser.role
     });
 
+    const refreshToken = generateRefreshToken({
+      userId: updatedUser.id,
+      email: updatedUser.email,
+      role: updatedUser.role
+    });
+
     const { password: _password, ...safeUser } = updatedUser;
-    return { user: safeUser, token };
+    return { user: safeUser, token, refreshToken };
   }
 
   /**
@@ -411,14 +423,60 @@ export class AuthService {
       });
     }
 
-    // Generate JWT token
+    // Generate JWT token & refresh token
     const token = generateToken({
       userId: authenticatedUser.id,
       email: authenticatedUser.email,
       role: authenticatedUser.role,
     });
 
+    const refreshToken = generateRefreshToken({
+      userId: authenticatedUser.id,
+      email: authenticatedUser.email,
+      role: authenticatedUser.role,
+    });
+
     const { password: _password, ...safeUser } = authenticatedUser;
-    return { user: safeUser, token };
+    return { user: safeUser, token, refreshToken };
+  }
+
+  /**
+   * Refresh access token silently using a valid refresh token
+   */
+  static async refreshToken(refreshTokenStr: string) {
+    if (!refreshTokenStr) {
+      throw new AppError('Refresh token is required', 400, 'BAD_REQUEST');
+    }
+
+    let decoded: JwtPayload;
+    try {
+      decoded = verifyRefreshToken(refreshTokenStr);
+    } catch (err) {
+      throw new AppError('Unauthorized: Refresh token is expired or invalid', 401, 'INVALID_REFRESH_TOKEN');
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId }
+    });
+
+    if (!user || user.isDeleted) {
+      throw new AppError('User not found or deleted', 401, 'UNAUTHORIZED');
+    }
+
+    if (user.accountStatus === AccountStatus.SUSPENDED) {
+      throw new AppError('Account is suspended', 403, 'ACCOUNT_SUSPENDED');
+    }
+
+    const payload: JwtPayload = {
+      userId: user.id,
+      email: user.email,
+      role: user.role
+    };
+
+    const newToken = generateToken(payload);
+    const newRefreshToken = generateRefreshToken(payload);
+
+    const { password: _password, ...safeUser } = user;
+    return { user: safeUser, token: newToken, refreshToken: newRefreshToken };
   }
 }

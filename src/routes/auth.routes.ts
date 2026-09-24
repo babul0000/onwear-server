@@ -44,6 +44,20 @@ router.post(
 );
 
 router.post(
+  '/refresh',
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { refreshToken } = req.body;
+      const data = await AuthService.refreshToken(refreshToken);
+      sendSuccessResponse(res, 200, 'Token refreshed successfully', data);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+
+router.post(
   '/google',
   async (req: any, res: Response, next: NextFunction): Promise<void> => {
     try {
