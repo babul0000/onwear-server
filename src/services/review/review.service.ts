@@ -123,7 +123,7 @@ export class ReviewService {
       where: { isDeleted: false, rating: { gte: 4 } },
       include: {
         user: { select: { id: true, name: true } },
-        product: { select: { id: true, name: true, sku: true, image: true, price: true, discountPrice: true } }
+        product: { select: { id: true, name: true, slug: true, sku: true, image: true, price: true, discountPrice: true } }
       },
       orderBy: { createdAt: 'desc' },
       take: limit

@@ -49,7 +49,11 @@ export class SettingService {
           advanceCourierScope: 'OUTSIDE_DHAKA_ONLY',
           advanceCourierAmountType: 'EXACT_SHIPPING',
           advanceCourierFixedAmount: 150,
-          advanceCourierNote: 'ঢাকার বাইরে ক্যাশ অন ডেলিভারি অর্ডারে ফেক অর্ডার রোধে ডেলিভারি চার্জ অগ্রিম প্রযোজ্য। বাকি টাকা পণ্য হাতে পেয়ে পরিশোধ করবেন।'
+          advanceCourierNote: 'ঢাকার বাইরে ক্যাশ অন ডেলিভারি অর্ডারে ফেক অর্ডার রোধে ডেলিভারি চার্জ অগ্রিম প্রযোজ্য। বাকি টাকা পণ্য হাতে পেয়ে পরিশোধ করবেন।',
+          welcomeOfferEnabled: true,
+          welcomeOfferTitle: 'New Member Welcome:',
+          welcomeOfferText: 'Get Tk 200 Off your first order with coupon code',
+          welcomeOfferCode: 'WELCOME200'
         }
       });
     }
@@ -92,6 +96,10 @@ export class SettingService {
     advanceCourierAmountType?: string;
     advanceCourierFixedAmount?: number;
     advanceCourierNote?: string | null;
+    welcomeOfferEnabled?: boolean;
+    welcomeOfferTitle?: string | null;
+    welcomeOfferText?: string | null;
+    welcomeOfferCode?: string | null;
   }) {
     // Ensure default settings exist first
     await this.getSettings();
@@ -131,6 +139,10 @@ export class SettingService {
     if (data.advanceCourierAmountType !== undefined) updateData.advanceCourierAmountType = data.advanceCourierAmountType;
     if (data.advanceCourierFixedAmount !== undefined) updateData.advanceCourierFixedAmount = Number(data.advanceCourierFixedAmount);
     if (data.advanceCourierNote !== undefined) updateData.advanceCourierNote = data.advanceCourierNote;
+    if (data.welcomeOfferEnabled !== undefined) updateData.welcomeOfferEnabled = !!data.welcomeOfferEnabled;
+    if (data.welcomeOfferTitle !== undefined) updateData.welcomeOfferTitle = data.welcomeOfferTitle;
+    if (data.welcomeOfferText !== undefined) updateData.welcomeOfferText = data.welcomeOfferText;
+    if (data.welcomeOfferCode !== undefined) updateData.welcomeOfferCode = data.welcomeOfferCode;
 
     const updated = await prisma.storeSetting.update({
       where: { id: 'default' },

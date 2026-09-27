@@ -451,6 +451,10 @@ model StoreSetting {
   advanceCourierAmountType  String   @default("EXACT_SHIPPING")
   advanceCourierFixedAmount Float    @default(150)
   advanceCourierNote        String?  @default("ঢাকার বাইরে ক্যাশ অন ডেলিভারি অর্ডারে ফেক অর্ডার রোধে ডেলিভারি চার্জ অগ্রিম প্রযোজ্য। বাকি টাকা পণ্য হাতে পেয়ে পরিশোধ করবেন।")
+  welcomeOfferEnabled       Boolean  @default(true)
+  welcomeOfferTitle         String?  @default("New Member Welcome:")
+  welcomeOfferText          String?  @default("Get Tk 200 Off your first order with coupon code")
+  welcomeOfferCode          String?  @default("WELCOME200")
   updatedAt             DateTime @updatedAt
 
   @@map("store_settings")
