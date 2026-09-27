@@ -83,7 +83,7 @@ export class PromotionService {
         {
           title: 'Hero Slide 2',
           imageUrl: 'https://res.cloudinary.com/lgmh6vly/image/upload/v1789142108/onwear/hero_slides/k1wzl2izqkjqlkuur1y3.webp',
-          linkUrl: '/products?category=denim',
+          linkUrl: '/products',
           positionX: 50,
           positionY: 50,
           displayOrder: 1,

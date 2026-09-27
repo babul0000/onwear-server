@@ -102,22 +102,44 @@ export class ProductService {
     // Category filter: could be category slug or categoryId.
     // If it is a parent category, we should include all its subcategories' products.
     if (query.category) {
-      const categoryRecord = await prisma.category.findFirst({
+      const catQuery = (query.category as string).trim();
+      let categoryRecord = await prisma.category.findFirst({
         where: {
           OR: [
-            { id: query.category as string },
-            { slug: query.category as string }
+            { id: catQuery },
+            { slug: { equals: catQuery, mode: 'insensitive' } },
+            { name: { equals: catQuery, mode: 'insensitive' } }
           ],
           isDeleted: false
         },
         include: { subcategories: { select: { id: true } } }
       });
 
+      // If not found by exact id or slug, try partial match on slug, name, or description
+      if (!categoryRecord) {
+        categoryRecord = await prisma.category.findFirst({
+          where: {
+            OR: [
+              { slug: { contains: catQuery, mode: 'insensitive' } },
+              { name: { contains: catQuery, mode: 'insensitive' } },
+              { description: { contains: catQuery, mode: 'insensitive' } }
+            ],
+            isDeleted: false
+          },
+          include: { subcategories: { select: { id: true } } }
+        });
+      }
+
       if (categoryRecord) {
         const categoryIds = [categoryRecord.id, ...categoryRecord.subcategories.map((s) => s.id)];
         where.categoryId = { in: categoryIds };
       } else {
-        where.categoryId = 'non-existent-id';
+        // Fallback: If no category matches by keyword, search products whose name or description contains catQuery
+        where.OR = [
+          ...(where.OR || []),
+          { name: { contains: catQuery, mode: 'insensitive' } },
+          { description: { contains: catQuery, mode: 'insensitive' } }
+        ];
       }
     }
 
