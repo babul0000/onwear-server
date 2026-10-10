@@ -19,5 +19,4 @@ process.on('SIGTERM', () => {
   });
 });
 
-// Restart trigger: updated SSLCommerz credentials in env
-
+// Restart trigger: size guide db persistence enabled

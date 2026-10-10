@@ -100,6 +100,7 @@ export class SettingService {
     welcomeOfferTitle?: string | null;
     welcomeOfferText?: string | null;
     welcomeOfferCode?: string | null;
+    sizeGuideData?: string | null;
   }) {
     // Ensure default settings exist first
     await this.getSettings();
@@ -143,6 +144,7 @@ export class SettingService {
     if (data.welcomeOfferTitle !== undefined) updateData.welcomeOfferTitle = data.welcomeOfferTitle;
     if (data.welcomeOfferText !== undefined) updateData.welcomeOfferText = data.welcomeOfferText;
     if (data.welcomeOfferCode !== undefined) updateData.welcomeOfferCode = data.welcomeOfferCode;
+    if (data.sizeGuideData !== undefined) updateData.sizeGuideData = data.sizeGuideData;
 
     const updated = await prisma.storeSetting.update({
       where: { id: 'default' },

@@ -455,6 +455,7 @@ model StoreSetting {
   welcomeOfferTitle         String?  @default("New Member Welcome:")
   welcomeOfferText          String?  @default("Get Tk 200 Off your first order with coupon code")
   welcomeOfferCode          String?  @default("WELCOME200")
+  sizeGuideData             String?  @db.Text
   updatedAt             DateTime @updatedAt
 
   @@map("store_settings")
