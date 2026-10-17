@@ -88,11 +88,29 @@ app.use(
   })
 );
 
-// Health Check
+// Base & Health Check
+app.get('/', (_req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'ONWEAR REST API is running successfully on Vercel',
+    docs: '/api-docs',
+    health: '/api/health'
+  });
+});
+
+app.get('/api', (_req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'ONWEAR REST API is running successfully on Vercel',
+    docs: '/api-docs',
+    health: '/api/health'
+  });
+});
+
 app.get('/api/health', (_req, res) => {
   res.status(200).json({
     success: true,
-    message: 'ShopNest REST API is running successfully',
+    message: 'ONWEAR REST API is running successfully',
     data: {
       uptime: process.uptime()
     }

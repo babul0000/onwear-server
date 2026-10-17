@@ -9,10 +9,14 @@ import { uploadBufferToCloudinary, isCloudinaryConfigured } from '../config/clou
 
 const router = Router();
 
-// Ensure local uploads directory exists for fallback
+// Ensure local uploads directory exists for fallback (wrapped in try/catch for serverless)
 const uploadsDir = path.join(process.cwd(), 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+try {
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+} catch {
+  // Read-only filesystem in serverless environments (Vercel Lambda)
 }
 
 // Memory storage to stream directly to Cloudinary without disk I/O bottlenecks
