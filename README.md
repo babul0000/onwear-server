@@ -1,6 +1,6 @@
-# ShopNest Backend (onwear-server)
+# ONWEAR REST API Backend (onwear-server)
 
-The backend server for **ShopNest**, a full-stack, premium e-commerce platform built with Express.js, TypeScript, Prisma ORM, and PostgreSQL.
+The backend server for **ONWEAR**, a full-stack, premium men's clothing e-commerce platform built with Express.js, TypeScript, Prisma ORM, and PostgreSQL.
 
 ## Features
 
